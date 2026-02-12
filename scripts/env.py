@@ -37,7 +37,8 @@ class PATH:
     DATA = ROOT / "data"
     PARQ = DataDictionary(
         AFTERMARKET = DATA / "src/aftermarket.parquet",
-        WICS = DATA / "src/wics.parquet"
+        WICS = DATA / "src/wics.parquet",
+        FUNDAMENTALS = DATA / "src/fundamentals.parquet",
     )
 
 

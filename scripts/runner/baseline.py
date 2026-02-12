@@ -7,7 +7,7 @@ pd.set_option('display.expand_frame_repr', False)
 def run_baseline():
     td = lw.TradingDate()
 
-    wics = lw.WiseICS(PATH.PARQ.WICS)
+    wics = lw.WiseICS(str(PATH.PARQ.WICS))
     try:
         if wics['date'].unique()[0] != td.closed:
             wics.fetch()
@@ -16,7 +16,7 @@ def run_baseline():
         pass
     wics.drop(columns=['date'], inplace=True)
 
-    market = lw.AfterMarket(PATH.PARQ.AFTERMARKET)
+    market = lw.AfterMarket(str(PATH.PARQ.AFTERMARKET))
     try:
         if market['date'].unique()[0] != td.closed:
             market.fetch()
@@ -30,12 +30,12 @@ def run_baseline():
 
     tickers = base.head(5).index
     print(tickers)
-    numbers = lw.Numbers(*tickers)
-    print(numbers.overview)
+    # numbers = lw.Numbers(*tickers)
+    # print(numbers.overview)
 
 
 if __name__ == "__main__":
-    # run_baseline()
+    run_baseline()
 
-    fng = lw.FnGuide('034730')
-    print(fng.snapshot)
+    # fng = lw.FnGuide('034730')
+    # print(fng.snapshot)
