@@ -8,17 +8,17 @@ pd.set_option('display.expand_frame_repr', False)
 
 class BaselineBuilder(DataFrame):
 
-    _metadata = ['_lg', 'td', 'wics', 'market', 'number']
+    _metadata = ['td', 'sector', 'market', 'number']
 
     def __init__(self):
         self.td     = lw.TradingDate()
-        self.wics   = wics   = lw.WiseICS(PATH.PARQ.WICS)
+        self.sector = sector = lw.WiseICS(PATH.PARQ.WICS)
         self.market = market = lw.AfterMarket(PATH.PARQ.AFTERMARKET)
         self.number = number = lw.Fundamentals(PATH.PARQ.FUNDAMENTALS)
         super().__init__(
-            wics.drop(columns=['date']) \
+            sector \
             .join(market.drop(columns=['name'])) \
-            .join(number.drop(columns=['close', 'date', 'foreignRate']))
+            .join(number.drop(columns=['close', 'foreignRate']))
         )
         return
 
@@ -36,10 +36,10 @@ class BaselineBuilder(DataFrame):
         if not self.is_buildable():
             raise SystemExit
 
-        if (self.td.clock().hour < 20) and (self.wics['date'].unique()[0] != self.td.closed):
+        if (self.td.clock().hour < 20) and (self.sector['date'].unique()[0] != self.td.closed):
             try:
-                self.wics.fetch()
-                self.wics.to_parquet(PATH.PARQ.WICS, engine='pyarrow')
+                self.sector.fetch()
+                self.sector.to_parquet(PATH.PARQ.WICS, engine='pyarrow')
             except Exception as e:
                 pass
 
@@ -62,12 +62,15 @@ class BaselineBuilder(DataFrame):
                 pass
 
         super().__init__(
-            self.wics.drop(columns=['date']) \
+            self.sector.drop(columns=['date']) \
                 .join(self.market.drop(columns=['name'])) \
                 .join(self.number.drop(columns=['date', 'close']))
         )
         self['fiftyTwoWeekHigh'] = self[['close', 'fiftyTwoWeekHigh']].max(axis=1)
         self['fiftyTwoWeekLow'] = self[['close', 'fiftyTwoWeekLow']].min(axis=1)
+        self['fiftyTwoWeekHighPct'] = 100 * (self['close'] / self['fiftyTwoWeekHigh'] - 1)
+        self['fiftyTwoWeekLowPct'] = 100 * (self['close'] / self['fiftyTwoWeekLow'] - 1)
+        self['targetPricePct'] = 100 * (self['close'] / self['targetPrice'] - 1)
 
 
         self.to_parquet(PATH.PARQ.BASELINE, engine='pyarrow')
@@ -79,5 +82,6 @@ if __name__ == "__main__":
     baseline = BaselineBuilder()
     print(baseline)
     print(baseline.columns)
+    baseline.to_excel(PATH.DOWNLOADS / 'baseline.xlsx')
 
     # print(baseline.is_buildable())

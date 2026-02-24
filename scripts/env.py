@@ -41,9 +41,10 @@ class PATH:
         WICS = DATA / "src/wics.parquet",
         FUNDAMENTALS = DATA / "src/fundamentals.parquet",
     )
+    DOWNLOADS = Path(os.getenv('USERPROFILE')) / 'Downloads'
 
 
 if __name__ == "__main__":
-    print(ROOT)
-    print(DATA)
-    print(PARQ)
+    print(PATH.ROOT)
+    print(PATH.DATA)
+    print(PATH.PARQ)
