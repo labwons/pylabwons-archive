@@ -1,1 +1,7 @@
+numpy
+pandas
+pykrx
 pylabwons
+requests
+tqdm
+urllib3

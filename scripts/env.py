@@ -29,17 +29,19 @@ if any([key.lower().startswith('colab') for key in os.environ]):
     HOST = 'google_colab'
 if any([key.lower().startswith('github') for key in os.environ]):
     HOST = 'github_action'
+if any([val.lower().startswith('hkefico') for val in os.environ.values()]):
+    HOST = 'hkefico'
 
 RUNTIME = ''
 
 class PATH:
     ROOT = _get_root()
     DATA = ROOT / "data"
-    PARQ = DataDictionary(
+    PARQUET = DataDictionary(
         AFTERMARKET = DATA / "src/aftermarket.parquet",
         BASELINE = DATA / "src/baseline.parquet",
         WICS = DATA / "src/wics.parquet",
-        FUNDAMENTALS = DATA / "src/fundamentals.parquet",
+        NUMBERS = DATA / "src/numbers.parquet",
     )
     DOWNLOADS = Path(os.getenv('USERPROFILE')) / 'Downloads'
 
@@ -47,4 +49,4 @@ class PATH:
 if __name__ == "__main__":
     print(PATH.ROOT)
     print(PATH.DATA)
-    print(PATH.PARQ)
+    print(PATH.PARQUET)
