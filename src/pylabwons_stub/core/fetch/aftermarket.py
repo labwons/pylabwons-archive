@@ -23,13 +23,17 @@ class AfterMarket(DataFrameHeir):
         td = TradingDate()
         self.logger(f'FETCH AFTER MARKET DATA ON {td.closed}')
         try:
-            data = pd.concat([
+            objs = [
                 self._fetch_general(),
                 self._fetch_market_cap(date=td.closed),
                 self._fetch_foreign_rate(date=td.closed),
                 self._fetch_market_cap_type(),
-            ], axis=1)
+            ]
+            for obj in objs:
+                if obj.empty:
+                    raise ConnectionError(f'FETCH FAILED')
 
+            data = pd.concat(objs, axis=1)
             data = data[data['market'].isin(['kosdaq', 'kospi'])]
             data = data.join(self._fetch_returns(td, data), how='left')
             data['tradingDate'] = str(td.closed)

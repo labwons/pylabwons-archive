@@ -46,7 +46,8 @@ class PATH:
     JSON = DataDictionary(
         BUILD = DATA / "log/build.json"
     )
-    DOWNLOADS = Path(os.getenv('USERPROFILE')) / 'Downloads'
+    if not HOST == 'google_colab':
+        DOWNLOADS = Path(os.getenv('USERPROFILE')) / 'Downloads'
 
 
 if __name__ == "__main__":
