@@ -121,7 +121,7 @@ BASELINE = lw.DataDictionary(
         data_type=str,
     ),
 
-    trailingSales=lw.DataDictionary(
+    trailingRevenue=lw.DataDictionary(
         kor_name='4분기합산매출',
         data_type=float,
     ),
@@ -142,7 +142,7 @@ BASELINE = lw.DataDictionary(
         data_type=float,
     ),
 
-    yoySales=lw.DataDictionary(
+    yoyRevenue=lw.DataDictionary(
         kor_name='yoy매출',
         data_type=float,
     ),
@@ -163,11 +163,11 @@ BASELINE = lw.DataDictionary(
         data_type=str,
     ),
 
-    fiscalSales=lw.DataDictionary(
+    fiscalRevenue=lw.DataDictionary(
         kor_name='직전결산연도매출',
         data_type=float,
     ),
-    fiscalSalesGrowth=lw.DataDictionary(
+    fiscalRevenueGrowth=lw.DataDictionary(
         kor_name='직전결산연도매출성장률',
         data_type=float,
     ),
@@ -296,11 +296,11 @@ BASELINE = lw.DataDictionary(
         kor_name='추정기관수',
         data_type=float,
     ),
-    estimatedSales=lw.DataDictionary(
+    estimatedRevenue=lw.DataDictionary(
         kor_name='추정매출',
         data_type=float,
     ),
-    estimatedSalesGrowth=lw.DataDictionary(
+    estimatedRevenueGrowth=lw.DataDictionary(
         kor_name='추정매출성장률',
         data_type=float,
     ),

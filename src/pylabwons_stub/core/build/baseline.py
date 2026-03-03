@@ -16,12 +16,17 @@ pd.set_option('display.expand_frame_repr', False)
 
 class Baseline(DataFrameHeir):
 
-    _metadata = ['log', 'logger', 'td']
+    _metadata = ['log', 'logger', 'td',
+                 'market', 'number', 'sector']
 
     def __init__(self, logger:Callable=print):
         self.log = Log()
         self.logger = logger
         self.td = lw.TradingDate()
+
+        self.market = AfterMarket(src=PATH.PARQUET.AFTERMARKET, logger=logger)
+        self.number = Numbers(src=PATH.PARQUET.NUMBERS, logger=logger)
+        self.sector = Wics(src=PATH.PARQUET.WICS, logger=logger)
 
         try:
             super().__init__(pd.read_parquet(PATH.PARQUET.BASELINE, engine='pyarrow'))
@@ -42,7 +47,7 @@ class Baseline(DataFrameHeir):
             if BASELINE[col].data_type == str:
                 continue
             if col in ['sharesOutstanding', 'sharesPreferred', 'sharesFloating']:
-                self[col] = self[col].str.replace('nan', '0').fillna('0')
+                self[col] = self[col].astype(str).str.replace('nan', '0').fillna('0')
             if col == 'ipo' or 'date' in col.lower():
                 self[col] = self._typecast(self[col], datetime)
             else:
@@ -95,51 +100,47 @@ class Baseline(DataFrameHeir):
             raise SystemExit
 
         self.logger(f'[BUILD BASELINE] @{self.td.closed}')
-        market = AfterMarket(PATH.PARQUET.AFTERMARKET, logger=self.logger)
-        sector = Wics(PATH.PARQUET.WICS, logger=self.logger)
-        number = Numbers(PATH.PARQUET.NUMBERS, logger=self.logger)
-
-        if (not market.date == self.td.closed == self.log.baseline.date) and \
+        if (not self.market.date == self.td.closed == self.log.baseline.date) and \
            (not HOST == 'hkefico'):
             try:
-                market.fetch()
-                market.to_parquet(PATH.PARQUET.AFTERMARKET, engine='pyarrow')
-                self.log.baseline.date = market.date
+                self.market.fetch()
+                self.market.to_parquet(PATH.PARQUET.AFTERMARKET, engine='pyarrow')
+                self.log.baseline.date = self.market.date
             except (ConnectionError, IndexError, KeyError, Exception) as e:
                 self.logger(f'>>> FAILED TO BUILD AFTER MARKET: {e}')
 
-        if (not sector.date == self.log.wics.date) and \
+        if (not self.sector.date == self.log.wics.date) and \
            (not HOST in ['github_action', 'hkefico']):
             try:
-                sector.fetch()
-                sector.to_parquet(PATH.PARQUET.WICS, engine='pyarrow')
-                self.log.wics.date = sector.date
+                self.sector.fetch()
+                self.sector.to_parquet(PATH.PARQUET.WICS, engine='pyarrow')
+                self.log.wics.date = self.sector.date
             except (ConnectionError, IndexError, KeyError, Exception) as e:
                 self.logger(f'>>> FAILED TO BUILD SECTOR: {e}')
 
-        if (not number.date == self.log.numbers.date) and \
+        if (not self.number.date == self.log.numbers.date) and \
            (not HOST == 'hkefico'):
-            base = market[market['marketCap'] >= market['marketCap'].median()]
+            base = self.market[self.market['marketCap'] >= self.market['marketCap'].median()]
             try:
-                number.fetch(*base.index)
+                self.number.fetch(*base.index)
                 for col in self.number.columns:
                     if col in ['sharesOutstanding', 'sharesPreferred', 'sharesFloating']:
-                        number[col] = number[col].fillna('0')
+                        self.number[col] = self.number[col].fillna('0')
 
                     if BASELINE[col].data_type == str:
-                        number[col] = number[col].astype(str)
+                        self.number[col] = self.number[col].astype(str)
                         continue
 
                     if 'date' in col.lower():
                         self[col] = self._typecast(self[col], datetime)
                     else:
                         self[col] = self._typecast(self[col])
-                number.to_parquet(PATH.PARQUET.NUMBERS, engine='pyarrow')
-                self.log.numbers.date = number.date
+                self.number.to_parquet(PATH.PARQUET.NUMBERS, engine='pyarrow')
+                self.log.numbers.date = self.number.date
             except (ConnectionError, IndexError, KeyError, Exception) as e:
                 self.logger(f'>>> FAILED TO BUILD NUMBERS: {e}')
 
-        self._capture_baseline(sector, market, number)
+        self._capture_baseline(self.sector, self.market, self.number)
         self.to_parquet(PATH.PARQUET.BASELINE, engine='pyarrow')
         return
 
