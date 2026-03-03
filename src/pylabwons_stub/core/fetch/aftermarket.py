@@ -1,5 +1,6 @@
-from scripts.src.schema.dataframe import DataFrameHeir
-from scripts.src.schema import market as SCHEMA
+from pylabwons_stub.schema.dataframe import DataFrameHeir
+from pylabwons_stub.schema import market as SCHEMA
+from pylabwons_stub.env import PATH
 from pylabwons import TradingDate
 from datetime import datetime
 from pandas import DataFrame, Series
@@ -12,7 +13,7 @@ class AfterMarket(DataFrameHeir):
 
     _metadata = ['logger']
 
-    def __init__(self, src:str=SCHEMA.AFTERMARKET, **kwargs):
+    def __init__(self, src:str=PATH.PARQUET.AFTERMARKET, **kwargs):
         super().__init__(src, **kwargs)
         self.logger = kwargs.get('logger', print)
         return
@@ -30,14 +31,12 @@ class AfterMarket(DataFrameHeir):
             ], axis=1)
 
             data = data[data['market'].isin(['kosdaq', 'kospi'])]
-
             data = data.join(self._fetch_returns(td, data), how='left')
             data['tradingDate'] = str(td.closed)
 
             super().__init__(data)
             self.logger(f'{"." * 30} {len(self)} STOCKS / RUNTIME: {time.perf_counter() - tic:.2f}s')
         except (KeyError, Exception) as e:
-            self.logger(f'FAILED FETCHING: {e} / RUNTIME: {time.perf_counter() - tic:.2f}s')
             raise ConnectionError(e)
         return
 

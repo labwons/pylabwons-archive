@@ -1,5 +1,6 @@
-from scripts.src.schema import market as SCHEMA
-from scripts.src.schema.dataframe import DataFrameHeir
+from pylabwons_stub.env import PATH
+from pylabwons_stub.schema import market as SCHEMA
+from pylabwons_stub.schema.dataframe import DataFrameHeir
 from pandas import DataFrame
 from typing import Callable
 import pandas as pd

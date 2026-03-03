@@ -1,5 +1,5 @@
 from pandas import DataFrame
-from pylabwons.schema.datadict import DataDictionary
+from pylabwons import DataDictionary
 from typing import Dict
 import functools
 

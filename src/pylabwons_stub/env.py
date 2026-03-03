@@ -43,6 +43,9 @@ class PATH:
         WICS = DATA / "src/wics.parquet",
         NUMBERS = DATA / "src/numbers.parquet",
     )
+    JSON = DataDictionary(
+        BUILD = DATA / "log/build.json"
+    )
     DOWNLOADS = Path(os.getenv('USERPROFILE')) / 'Downloads'
 
 

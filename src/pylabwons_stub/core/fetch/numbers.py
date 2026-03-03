@@ -1,5 +1,5 @@
-from scripts.src.schema.dataframe import DataFrameHeir
-from scripts.src.schema import market as SCHEMA
+from pylabwons_stub.schema.dataframe import DataFrameHeir
+from pylabwons_stub.env import PATH
 from pylabwons import FnGuide
 from tqdm import auto
 import pandas as pd
@@ -10,7 +10,7 @@ class Numbers(DataFrameHeir):
 
     _metadata = ['logger', 'progress_bar']
 
-    def __init__(self, src:str=SCHEMA.NUMBERS, **kwargs):
+    def __init__(self, src:str=PATH.PARQUET.NUMBERS, **kwargs):
         super().__init__(src, **kwargs)
         self.logger = kwargs.get('logger', print)
         self.progress_bar:bool = kwargs.get('progress_bar', True)
@@ -37,6 +37,10 @@ class Numbers(DataFrameHeir):
         super().__init__(pd.concat(objs, axis=1).T)
         self.logger(f'{"." * 30} {len(self)} STOCKS / RUNTIME: {time.perf_counter() - tic:.2f}s')
         return
+
+    @property
+    def date(self) -> str:
+        return self['numbersDate'].unique()[0]
 
 
 if __name__ == '__main__':

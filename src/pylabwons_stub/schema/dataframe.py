@@ -14,11 +14,21 @@ class DataFrameHeir(DataFrame):
         return DataFrameHeir
 
     def __init__(self, *args, **kwargs):
+
+        _src = self._args2df(*args, **kwargs)
+        if len(_src) == 1:
+            super().__init__(_src[0])
+            return
+        super().__init__(self._merge_dataframes(*_src, **kwargs))
+        return
+
+    @classmethod
+    def _args2df(cls, *args, **kwargs) -> List[DataFrame]:
         # Type Check
         # Can only pass [str, Path, DataFrame]
         # for [str, Path] case, it parses the source into DataFrame, and then insert to
         # source list: _src
-        _src:List[Union[Any, DataFrame]] = []
+        _src: List[Union[Any, DataFrame]] = []
         for n, arg in enumerate(args):
 
             if isinstance(arg, DataFrame):
@@ -35,21 +45,16 @@ class DataFrameHeir(DataFrame):
                         raise ConnectionError(f'Failed to fetch: {arg}')
 
                     if arg.endswith('.csv'):
-                        _src.append(self._from_file(arg, raw=io.StringIO(resp.content), **kwargs))
+                        _src.append(cls._from_file(arg, raw=io.StringIO(resp.content), **kwargs))
                         continue
                     if arg.endswith('.pkl') or arg.endswith('.parquet'):
-                        _src.append(self._from_file(arg, raw=io.BytesIO(resp.content), **kwargs))
+                        _src.append(cls._from_file(arg, raw=io.BytesIO(resp.content), **kwargs))
                         continue
-                _src.append(self._from_file(arg, **kwargs))
+                _src.append(cls._from_file(arg, **kwargs))
                 continue
 
             raise TypeError(f'Unknown type: {n} / {type(arg)}')
-
-        if len(_src) == 1:
-            super().__init__(_src[0])
-            return
-        super().__init__(self._merge_dataframes(*_src, **kwargs))
-        return
+        return _src
 
     @classmethod
     def _from_file(cls, file:str, raw=None, **kwargs) -> DataFrame:

@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pylabwons_stub"
+version = "0.1.0"
+dependencies = [
+    "numpy",
+    "pandas",
+    "pyarrow",  # Parquet 지원용
+    "pylabwons",
+    "pykrx",
+    "requests",
+    "tqdm",
+    "urllib3"
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,4 +1,4 @@
-from pylabwons.schema.datadict import DataDictionary
+from pylabwons import DataDictionary
 
 URLS = lambda ticker: DataDictionary(
     SNAPSHOT=f"http://comp.fnguide.com/SVO2/ASP/SVD_Main.asp?" \
