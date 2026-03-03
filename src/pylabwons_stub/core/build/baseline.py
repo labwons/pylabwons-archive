@@ -113,7 +113,6 @@ class Baseline(DataFrameHeir):
                 try:
                     self.market.fetch()
                     self.market.to_parquet(PATH.PARQUET.AFTERMARKET, engine='pyarrow')
-                    self.log.baseline.date = self.market.date
                 except (ConnectionError, IndexError, KeyError, Exception) as e:
                     self.logger(f'>>> FAILED TO BUILD AFTER MARKET: {e}')
 
@@ -123,7 +122,6 @@ class Baseline(DataFrameHeir):
                 try:
                     self.sector.fetch()
                     self.sector.to_parquet(PATH.PARQUET.WICS, engine='pyarrow')
-                    self.log.wics.date = self.sector.date
                 except (ConnectionError, IndexError, KeyError, Exception) as e:
                     self.logger(f'>>> FAILED TO BUILD SECTOR: {e}')
 
@@ -145,12 +143,17 @@ class Baseline(DataFrameHeir):
                         else:
                             self[col] = self._typecast(self[col])
                     self.number.to_parquet(PATH.PARQUET.NUMBERS, engine='pyarrow')
-                    self.log.numbers.date = self.number.date
                 except (ConnectionError, IndexError, KeyError, Exception) as e:
                     self.logger(f'>>> FAILED TO BUILD NUMBERS: {e}')
 
         self._capture_baseline(self.sector, self.market, self.number)
         self.to_parquet(PATH.PARQUET.BASELINE, engine='pyarrow')
+
+        self.log.baseline.date = self.td.closed
+        self.log.aftermarket.date = str(self.market.date)
+        self.log.wics.date = str(self.sector.date)
+        self.log.numbers.date = str(self.number.date)
+        self.log.save()
         return
 
     @property
@@ -165,5 +168,6 @@ if __name__ == "__main__":
     # print(baseline.columns)
     baseline.build()
     print(baseline)
+    print(baseline.log)
     # print(baseline.logger)
     # baseline.to_excel(PATH.DOWNLOADS / 'baseline.xlsx')
