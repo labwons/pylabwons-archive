@@ -116,7 +116,7 @@ class Baseline(DataFrameHeir):
                 except (ConnectionError, IndexError, KeyError, Exception) as e:
                     self.logger(f'>>> FAILED TO BUILD AFTER MARKET: {e}')
 
-            if (not self.sector.date == self.log.wics.date) and \
+            if (not self.sector.date == self.sector.server_date == self.log.wics.date) and \
                (not HOST == 'github_action') and \
                ('wics' in jobs):
                 try:

@@ -1,3 +1,4 @@
+from functools import cached_property
 from pylabwons_stub.env import PATH
 from pylabwons_stub.schema import market as SCHEMA
 from pylabwons_stub.schema.dataframe import DataFrameHeir
@@ -19,13 +20,12 @@ class Wics(DataFrameHeir):
     def fetch(self):
         tic = time.perf_counter()
         try:
-            date = self._fetch_date()
-            self.logger(f'FETCH WICS ON {date}')
+            self.logger(f'FETCH WICS ON {self.server_date}')
 
             objs = []
             for n, (code, name) in enumerate(SCHEMA.CODES.items(), start=1):
                 self.logger(f'>>> [{n}/{len(SCHEMA.CODES)}]{name}@{code}', end=' ... ')
-                obj = self._fetch_group(code, date, logger=self.logger)
+                obj = self._fetch_group(code, self.server_date, logger=self.logger)
                 if obj.empty:
                     raise ConnectionError(f'Failed to fetch {code} / {name}')
                 objs.append(obj)
@@ -56,7 +56,7 @@ class Wics(DataFrameHeir):
                     adder[key] = SCHEMA.EXCEPTIONS[key]
             exceptions = DataFrame(adder).T
             data = pd.concat(objs=[data, exceptions], axis=0)
-            data['wicsDate'] = date
+            data['wicsDate'] = self.server_date
             self.logger(f'{"." * 30} {len(data)} STOCKS / RUNTIME: {time.perf_counter() -  tic:.2f}s')
             super().__init__(data)
         except (ConnectionError, Exception, TimeoutError) as reason:
@@ -67,6 +67,10 @@ class Wics(DataFrameHeir):
     @property
     def date(self) -> str:
         return self['wicsDate'].unique()[0]
+
+    @cached_property
+    def server_date(self) -> str:
+        return self._fetch_date()
 
     @staticmethod
     def _fetch_date() -> str:
