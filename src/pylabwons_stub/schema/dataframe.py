@@ -9,19 +9,6 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 class DataFrameHeir(DataFrame):
 
-    @property
-    def _constructor(self):
-        return DataFrameHeir
-
-    def __init__(self, *args, **kwargs):
-
-        _src = self._args2df(*args, **kwargs)
-        if len(_src) == 1:
-            super().__init__(_src[0])
-            return
-        super().__init__(self._merge_dataframes(*_src, **kwargs))
-        return
-
     @classmethod
     def _args2df(cls, *args, **kwargs) -> List[DataFrame]:
         # Type Check
@@ -86,3 +73,15 @@ class DataFrameHeir(DataFrame):
         if method == 'join':
             return base
         raise KeyError(f'Unknown method: "{method}"')
+
+    @property
+    def _constructor(self):
+        return DataFrameHeir
+
+    def __init__(self, *args, **kwargs):
+        _src = self._args2df(*args, **kwargs)
+        if len(_src) == 1:
+            super().__init__(_src[0])
+        else:
+            super().__init__(self._merge_dataframes(*_src, **kwargs))
+        return

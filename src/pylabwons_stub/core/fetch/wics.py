@@ -1,5 +1,4 @@
 from functools import cached_property
-from pylabwons_stub.env import PATH
 from pylabwons_stub.schema import market as SCHEMA
 from pylabwons_stub.schema.dataframe import DataFrameHeir
 from pandas import DataFrame
@@ -92,7 +91,7 @@ class Wics(DataFrameHeir):
                 return DataFrame()
             else:
                 time.sleep(5)
-                return WICS._fetch_group(code, date, countdown - 1)
+                return Wics._fetch_group(code, date, countdown - 1)
         if "hmg-corp" in resp.text:
             logger(f'NG: BLOCKED')
             return DataFrame()
@@ -101,5 +100,5 @@ class Wics(DataFrameHeir):
 
 
 if __name__ == "__main__":
-    wics = WICS()
+    wics = Wics()
     print(wics)

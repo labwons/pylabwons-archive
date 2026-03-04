@@ -1,6 +1,5 @@
 from pylabwons_stub.schema.dataframe import DataFrameHeir
 from pylabwons_stub.schema import market as SCHEMA
-from pylabwons_stub.env import PATH
 from pylabwons import TradingDate
 from datetime import datetime
 from pandas import DataFrame, Series
@@ -13,7 +12,7 @@ class AfterMarket(DataFrameHeir):
 
     _metadata = ['logger']
 
-    def __init__(self, src:str=PATH.PARQUET.AFTERMARKET, **kwargs):
+    def __init__(self, src:str=SCHEMA.AFTERMARKET, **kwargs):
         super().__init__(src, **kwargs)
         self.logger = kwargs.get('logger', print)
         return

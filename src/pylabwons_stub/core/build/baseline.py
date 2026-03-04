@@ -1,6 +1,5 @@
 from pylabwons_stub.schema.dataframe import DataFrameHeir
 from pylabwons_stub.schema.key import BASELINE
-from pylabwons_stub.core.build.log import Log
 from pylabwons_stub.core.fetch.aftermarket import AfterMarket
 from pylabwons_stub.core.fetch.numbers import Numbers
 from pylabwons_stub.core.fetch.wics import Wics
@@ -10,19 +9,20 @@ from typing import Any, Callable
 import numpy as np
 import pandas as pd
 import pylabwons as lw
-import time
+import json, time
 pd.set_option('display.expand_frame_repr', False)
 
 
 class Baseline(DataFrameHeir):
 
-    _metadata = ['log', 'logger', 'td',
+    _metadata = ['dates', 'logger', 'td',
                  'market', 'number', 'sector']
 
     def __init__(self, logger:Callable=print):
-        self.log = Log()
         self.logger = logger
         self.td = lw.TradingDate()
+        with open(PATH.JSON.BUILD, 'r', encoding='utf-8') as f:
+            self.dates = lw.DataDictionary(json.load(f))
 
         self.market = AfterMarket(src=PATH.PARQUET.AFTERMARKET, logger=logger)
         self.number = Numbers(src=PATH.PARQUET.NUMBERS, logger=logger)
@@ -125,7 +125,7 @@ class Baseline(DataFrameHeir):
                 except (ConnectionError, IndexError, KeyError, Exception) as e:
                     self.logger(f'>>> FAILED TO BUILD SECTOR: {e}')
 
-            if (not self.number.date == self.log.numbers.date) and \
+            if (not self.number.date == self.number.server_date == self.log.numbers.date) and \
                ('numbers' in jobs):
                 base = self.market[self.market['marketCap'] >= self.market['marketCap'].median()]
                 try:
@@ -150,11 +150,12 @@ class Baseline(DataFrameHeir):
         self.to_parquet(PATH.PARQUET.BASELINE, engine='pyarrow')
         self.to_csv(PATH.CSV.BASELINE, encoding='utf-8', index=True)
 
-        self.log.baseline.date = self.td.closed
-        self.log.aftermarket.date = str(self.market.date)
-        self.log.wics.date = str(self.sector.date)
-        self.log.numbers.date = str(self.number.date)
-        self.log.save()
+        self.dates.baseline.date = self.td.closed
+        self.dates.aftermarket.date = str(self.market.date)
+        self.dates.wics.date = str(self.sector.date)
+        self.dates.numbers.date = str(self.number.date)
+        with open(PATH.JSON.BUILD, 'w', encoding='utf-8') as f:
+            json.dump(self.dates, f, ensure_ascii=False, indent=4)
         return
 
     @property
@@ -167,8 +168,8 @@ if __name__ == "__main__":
     baseline = Baseline()
     # print(baseline)
     # print(baseline.columns)
-    baseline.build()
-    print(baseline)
-    print(baseline.log)
+    # baseline.build()
+    # print(baseline)
+    print(baseline.dates)
     # print(baseline.logger)
     # baseline.to_excel(PATH.DOWNLOADS / 'baseline.xlsx')
