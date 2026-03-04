@@ -148,6 +148,7 @@ class Baseline(DataFrameHeir):
 
         self._capture_baseline(self.sector, self.market, self.number)
         self.to_parquet(PATH.PARQUET.BASELINE, engine='pyarrow')
+        self.to_csv(PATH.CSV.BASELINE, encoding='utf-8', index=True)
 
         self.log.baseline.date = self.td.closed
         self.log.aftermarket.date = str(self.market.date)

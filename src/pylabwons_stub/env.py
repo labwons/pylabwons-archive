@@ -43,11 +43,16 @@ class PATH:
         WICS = DATA / "src/wics.parquet",
         NUMBERS = DATA / "src/numbers.parquet",
     )
+    CSV = DataDictionary(
+        BASELINE = DATA / "src/baseline.csv"
+    )
     JSON = DataDictionary(
         BUILD = DATA / "log/build.json"
     )
     if not HOST == 'google_colab':
         DOWNLOADS = Path(os.getenv('USERPROFILE')) / 'Downloads'
+    else:
+        DOWNLOADS = os.getcwd()
 
 
 if __name__ == "__main__":
