@@ -127,7 +127,8 @@ class Baseline(DataFrameHeir):
                 except (ConnectionError, IndexError, KeyError, Exception) as e:
                     self.logger(f'>>> FAILED TO BUILD SECTOR: {e}')
 
-            if (not self.number.date == self.number.server_date == self.dates.numbers.date) and \
+            if (not self.number.server_date == 'failed') and \
+               (not self.number.date == self.number.server_date == self.dates.numbers.date) and \
                ('numbers' in jobs):
                 base = self.market[self.market['marketCap'] >= self.market['marketCap'].median()]
                 try:

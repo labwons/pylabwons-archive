@@ -15,6 +15,10 @@ class Numbers(DataFrameHeir):
         super().__init__(src, **kwargs)
         self.logger = kwargs.get('logger', print)
         self.progress_bar:bool = kwargs.get('progress_bar', True)
+        try:
+            self.server_date = FnGuide('005930').date
+        except ConnectionError:
+            self.server_date = 'failed'
         return
 
     def fetch(self, *tickers:str):
