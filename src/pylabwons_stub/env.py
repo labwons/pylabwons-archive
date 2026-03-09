@@ -49,7 +49,7 @@ class PATH:
     JSON = DataDictionary(
         BUILD = DATA / "log/build.json"
     )
-    if not HOST == 'google_colab':
+    if HOST == 'local':
         DOWNLOADS = Path(os.getenv('USERPROFILE')) / 'Downloads'
     else:
         DOWNLOADS = os.getcwd()
