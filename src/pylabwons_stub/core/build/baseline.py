@@ -13,6 +13,7 @@ import json, time
 pd.set_option('display.expand_frame_repr', False)
 
 
+pd.set_option('future.no_silent_downcasting', True)
 class Baseline(DataFrameHeir):
 
     _metadata = ['dates', 'logger', 'td',

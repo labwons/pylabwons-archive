@@ -4,10 +4,10 @@ import os
 
 
 if __name__ == "__main__":
-    lw.login_krx(os.environ['KRX_ID'], os.environ['KRX_PW'])
+    if lws.HOST != 'hkefico':
+        lw.login_krx(os.environ['KRX_ID'], os.environ['KRX_PW'])
 
     baseline = lws.Baseline(logger=lw.Logger())
     baseline.number.progress_bar = False
     baseline.build()
     baseline.logger(baseline.dates)
-
