@@ -116,6 +116,8 @@ class Baseline(DataFrameHeir):
                     self.dates.aftermarket.date = str(self.market.date)
                 except (ConnectionError, IndexError, KeyError, Exception) as e:
                     self.logger(f'>>> FAILED TO BUILD AFTER MARKET: {e}')
+            else:
+                self.logger(f'>>> SKIPPED TO BUILD AFTER MARKET')
 
             if (not self.sector.date == self.sector.server_date == self.dates.wics.date) and \
                (not HOST == 'github_action') and \
@@ -126,8 +128,10 @@ class Baseline(DataFrameHeir):
                     self.dates.wics.date = str(self.sector.date)
                 except (ConnectionError, IndexError, KeyError, Exception) as e:
                     self.logger(f'>>> FAILED TO BUILD SECTOR: {e}')
+            else:
+                self.logger(f'>>> SKIPPED TO BUILD SECTOR')
 
-            if (not self.number.server_date == 'failed') and \
+            if (not self.number.server_date in ['failed', '']) and \
                (not self.number.date == self.number.server_date == self.dates.numbers.date) and \
                ('numbers' in jobs):
                 base = self.market[self.market['marketCap'] >= self.market['marketCap'].median()]
@@ -146,6 +150,8 @@ class Baseline(DataFrameHeir):
                     self.dates.numbers.date = str(self.number.date)
                 except (ConnectionError, IndexError, KeyError, Exception) as e:
                     self.logger(f'>>> FAILED TO BUILD NUMBERS: {e}')
+            else:
+                self.logger(f'>>> SKIPPED TO BUILD NUMBERS')
 
         self._capture_baseline(self.sector, self.market, self.number)
         self.to_parquet(PATH.PARQUET.BASELINE, engine='pyarrow')

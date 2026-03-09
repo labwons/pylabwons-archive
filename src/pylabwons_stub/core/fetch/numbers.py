@@ -1,4 +1,3 @@
-from functools import cached_property
 from pylabwons_stub.schema.dataframe import DataFrameHeir
 from pylabwons_stub.schema import market as SCHEMA
 from pylabwons import FnGuide
@@ -17,7 +16,7 @@ class Numbers(DataFrameHeir):
         self.progress_bar:bool = kwargs.get('progress_bar', True)
         try:
             self.server_date = FnGuide('005930').date
-        except ConnectionError:
+        except (ConnectionError, IndexError):
             self.server_date = 'failed'
         return
 
@@ -48,10 +47,6 @@ class Numbers(DataFrameHeir):
     @property
     def date(self) -> str:
         return self['numbersDate'].unique()[0]
-
-    @cached_property
-    def server_date(self) -> str:
-        return FnGuide('005930').date
 
 
 if __name__ == '__main__':
