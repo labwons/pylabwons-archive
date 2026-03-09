@@ -108,7 +108,7 @@ class Baseline(DataFrameHeir):
         self.logger(f'[BUILD BASELINE] @{self.td.closed}')
         if not HOST == 'hkefico':
 
-            if (not self.market.date == self.td.closed == self.log.baseline.date) and \
+            if (not self.market.date == self.td.closed == self.dates.baseline.date) and \
                ('aftermarket' in jobs):
                 try:
                     self.market.fetch()
@@ -116,7 +116,7 @@ class Baseline(DataFrameHeir):
                 except (ConnectionError, IndexError, KeyError, Exception) as e:
                     self.logger(f'>>> FAILED TO BUILD AFTER MARKET: {e}')
 
-            if (not self.sector.date == self.sector.server_date == self.log.wics.date) and \
+            if (not self.sector.date == self.sector.server_date == self.dates.wics.date) and \
                (not HOST == 'github_action') and \
                ('wics' in jobs):
                 try:
@@ -125,14 +125,14 @@ class Baseline(DataFrameHeir):
                 except (ConnectionError, IndexError, KeyError, Exception) as e:
                     self.logger(f'>>> FAILED TO BUILD SECTOR: {e}')
 
-            if (not self.number.date == self.number.server_date == self.log.numbers.date) and \
+            if (not self.number.date == self.number.server_date == self.dates.numbers.date) and \
                ('numbers' in jobs):
                 base = self.market[self.market['marketCap'] >= self.market['marketCap'].median()]
                 try:
                     self.number.fetch(*base.index)
                     for col in self.number.columns:
                         if col in ['sharesOutstanding', 'sharesPreferred', 'sharesFloating']:
-                            self.number[col] = self.number[col].fillna('0')
+                            self.number[col] = self.number[col].fillna(0).infer_objects(copy=False)
 
                         if BASELINE[col].data_type == str:
                             self.number[col] = self.number[col].astype(str)
@@ -157,10 +157,6 @@ class Baseline(DataFrameHeir):
         with open(PATH.JSON.BUILD, 'w', encoding='utf-8') as f:
             json.dump(self.dates, f, ensure_ascii=False, indent=4)
         return
-
-    @property
-    def date(self):
-        return self.log
 
 
 
