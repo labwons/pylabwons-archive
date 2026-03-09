@@ -113,6 +113,7 @@ class Baseline(DataFrameHeir):
                 try:
                     self.market.fetch()
                     self.market.to_parquet(PATH.PARQUET.AFTERMARKET, engine='pyarrow')
+                    self.dates.aftermarket.date = str(self.market.date)
                 except (ConnectionError, IndexError, KeyError, Exception) as e:
                     self.logger(f'>>> FAILED TO BUILD AFTER MARKET: {e}')
 
@@ -122,6 +123,7 @@ class Baseline(DataFrameHeir):
                 try:
                     self.sector.fetch()
                     self.sector.to_parquet(PATH.PARQUET.WICS, engine='pyarrow')
+                    self.dates.wics.date = str(self.sector.date)
                 except (ConnectionError, IndexError, KeyError, Exception) as e:
                     self.logger(f'>>> FAILED TO BUILD SECTOR: {e}')
 
@@ -143,6 +145,7 @@ class Baseline(DataFrameHeir):
                         else:
                             self[col] = self._typecast(self[col])
                     self.number.to_parquet(PATH.PARQUET.NUMBERS, engine='pyarrow')
+                    self.dates.numbers.date = str(self.number.date)
                 except (ConnectionError, IndexError, KeyError, Exception) as e:
                     self.logger(f'>>> FAILED TO BUILD NUMBERS: {e}')
 
@@ -151,9 +154,6 @@ class Baseline(DataFrameHeir):
         self.to_csv(PATH.CSV.BASELINE, encoding='utf-8', index=True)
 
         self.dates.baseline.date = self.td.closed
-        self.dates.aftermarket.date = str(self.market.date)
-        self.dates.wics.date = str(self.sector.date)
-        self.dates.numbers.date = str(self.number.date)
         with open(PATH.JSON.BUILD, 'w', encoding='utf-8') as f:
             json.dump(self.dates, f, ensure_ascii=False, indent=4)
         return
@@ -168,4 +168,5 @@ if __name__ == "__main__":
     # print(baseline)
     print(baseline.dates)
     # print(baseline.logger)
+    print(baseline.number.date)
     # baseline.to_excel(PATH.DOWNLOADS / 'baseline.xlsx')
