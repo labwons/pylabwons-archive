@@ -41,7 +41,7 @@ BASELINE = SCHEMA = lw.DataDictionary(
     amount=lw.DataDictionary(
         kor_name='거래대금',
         data_type=int,
-        market_map=True,
+        market_map=False,
         market_bubble=True,
     ),
     returnOn1Day=lw.DataDictionary(

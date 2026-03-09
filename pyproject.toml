@@ -8,6 +8,7 @@ version = "0.1.0"
 dependencies = [
     "numpy",
     "pandas",
+    "plotly",
     "pyarrow",  # Parquet 지원용
     "pylabwons",
     "pykrx",
