@@ -19,15 +19,17 @@ class Numbers(DataFrameHeir):
 
     def fetch(self, *tickers:str):
         tic = time.perf_counter()
+        obj = FnGuide(tickers[0])
+        self.logger(f'FETCH MARKET NUMBERS @{obj.date}')
+
         if self.progress_bar:
-            loop = auto.tqdm(enumerate(tickers))
+            loop = auto.tqdm(enumerate(tickers[1:]))
         else:
-            loop = enumerate(tickers)
-        objs = []
+            loop = enumerate(tickers[1:])
+
+        objs = [obj.numbers]
         for n, ticker in loop:
             obj = FnGuide(ticker)
-            if n == 0:
-                self.logger(f'FETCH MARKET NUMBERS OF {obj.date}')
             try:
                 objs.append(obj.numbers)
             except Exception as e:

@@ -11,7 +11,6 @@ on:
 
 permissions:
   contents: write
-  id-token: write
 
 jobs:
   build:
@@ -32,6 +31,9 @@ jobs:
         pip install -e .
 
     - name: Build
+      env:
+        KRX_ID: ${{ secrets.KRX_ID }}
+        KRX_PW: ${{ secrets.KRX_PW }}
       run: |
         python run/build_action.py
 

@@ -140,10 +140,7 @@ class Baseline(DataFrameHeir):
                             self.number[col] = self.number[col].astype(str)
                             continue
 
-                        if 'date' in col.lower():
-                            self.number[col] = self._typecast(self.number[col], datetime)
-                        else:
-                            self.number[col] = self._typecast(self.number[col])
+                        self.number[col] = self._typecast(self.number[col])
                     self.number.to_parquet(PATH.PARQUET.NUMBERS, engine='pyarrow')
                     self.dates.numbers.date = str(self.number.date)
                 except (ConnectionError, IndexError, KeyError, Exception) as e:
