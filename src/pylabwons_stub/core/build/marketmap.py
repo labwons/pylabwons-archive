@@ -128,4 +128,4 @@ class MarketMap(Baseline):
 if __name__ == "__main__":
     mmap = MarketMap()
     # print(mmap)
-    mmap.test_plot()
+    # mmap.test_plot()
