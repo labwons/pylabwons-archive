@@ -3,7 +3,7 @@ from pylabwons_stub.schema.key import BASELINE
 from pylabwons_stub.core.fetch.aftermarket import AfterMarket
 from pylabwons_stub.core.fetch.numbers import Numbers
 from pylabwons_stub.core.fetch.wics import Wics
-from pylabwons_stub.env import HOST, PATH
+from pylabwons_stub.env import HOST, PATH, RUNTIME
 from datetime import datetime
 from typing import Any, Callable
 import numpy as np
@@ -86,7 +86,7 @@ class Baseline(DataFrameHeir):
         return series.astype(str)
 
     def is_buildable(self) -> bool:
-        if HOST == 'github_action':
+        if HOST == 'github_action' and RUNTIME in ["push", "schedule"]:
             if self.td.closed != self.td.clock("%Y%m%d"):
                 return False
             clock = self.td.clock()
