@@ -105,7 +105,7 @@ class Baseline(DataFrameHeir):
                     return ['market']
 
                 else:
-                    return ['number']
+                    return ['number', 'sector']
 
         if not self.market.date == self.td.closed == self.dates.market.date:
             tickets.append('market')
@@ -114,7 +114,7 @@ class Baseline(DataFrameHeir):
             tickets.append('sector')
 
         if not self.number.date == self.number.server_date == self.dates.number.date:
-            if not self.number.server_date in ['failed', '']:
+            if not self.number.server_date in ['failed', ''] and self.td.clock().hour > 18:
                 tickets.append('number')
 
         return tickets
@@ -122,14 +122,16 @@ class Baseline(DataFrameHeir):
 
     def build(self, *tickets):
         tickets = self.get_tickets(*tickets)
+        self.logger(f'[BUILD BASELINE]')
+        self.logger(f'| RUNS ON "{HOST.upper()} / {RUNTIME.upper()}"')
+        self.logger(f'| TRADING DATE: {self.td.closed}')
+        self.logger(f'| TICKETS: {tickets}')
 
-        self.logger(f'[BUILD BASELINE] ON {self.td.closed} @{HOST.upper()} / {RUNTIME.upper()}')
-        self.logger(f'>>> TICKETS: {tickets}')
         if 'market' in tickets:
             try:
                 self.market.fetch()
                 self.market.to_parquet(PATH.PARQUET.AFTERMARKET, engine='pyarrow')
-                self.dates.aftermarket.date = str(self.market.date)
+                self.dates.market.date = str(self.market.date)
             except (ConnectionError, IndexError, KeyError, Exception) as e:
                 self.logger(f'>>> FAILED TO BUILD AFTER MARKET: {e}')
 
@@ -137,7 +139,7 @@ class Baseline(DataFrameHeir):
             try:
                 self.sector.fetch()
                 self.sector.to_parquet(PATH.PARQUET.WICS, engine='pyarrow')
-                self.dates.wics.date = str(self.sector.date)
+                self.dates.sector.date = str(self.sector.date)
             except (ConnectionError, IndexError, KeyError, Exception) as e:
                 self.logger(f'>>> FAILED TO BUILD SECTOR: {e}')
 
@@ -155,7 +157,7 @@ class Baseline(DataFrameHeir):
 
                     self.number[col] = self._typecast(self.number[col])
                 self.number.to_parquet(PATH.PARQUET.NUMBERS, engine='pyarrow')
-                self.dates.numbers.date = str(self.number.date)
+                self.dates.number.date = str(self.number.date)
             except (ConnectionError, IndexError, KeyError, Exception) as e:
                 self.logger(f'>>> FAILED TO BUILD NUMBERS: {e}')
 
@@ -167,6 +169,9 @@ class Baseline(DataFrameHeir):
             self.dates.baseline.date = self.td.closed
             with open(PATH.JSON.BUILD, 'w', encoding='utf-8') as f:
                 json.dump(self.dates, f, ensure_ascii=False, indent=4)
+        else:
+            self.logger('>>> NOTHING TO BUILD')
+        self.logger(self.dates)
         return
 
 
@@ -177,6 +182,5 @@ if __name__ == "__main__":
     # print(baseline.columns)
     baseline.build()
     # print(baseline)
-    print(baseline.dates)
     # print(baseline.logger)
     # baseline.to_excel(PATH.DOWNLOADS / 'baseline.xlsx')

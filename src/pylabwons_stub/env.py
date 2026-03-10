@@ -32,7 +32,7 @@ if any([key.lower().startswith('github') for key in os.environ]):
 if any([val.lower().startswith('hkefico') for val in os.environ.values()]):
     HOST = 'hkefico'
 
-RUNTIME = os.environ.get("GITHUB_EVENT_NAME", "")
+RUNTIME = os.environ.get("GITHUB_EVENT_NAME", "*")
 
 class PATH:
     ROOT = _get_root()
