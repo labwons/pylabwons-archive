@@ -11,5 +11,4 @@ if __name__ == "__main__":
     baseline = lws.Baseline(logger=logger)
     baseline.number.progress_bar = False
     baseline.build()
-    baseline.logger(f'\n{baseline.dates}')
 

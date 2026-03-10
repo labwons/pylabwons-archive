@@ -23,10 +23,10 @@ class Wics(DataFrameHeir):
 
             objs = []
             for n, (code, name) in enumerate(SCHEMA.CODES.items(), start=1):
-                self.logger(f'>>> [{n}/{len(SCHEMA.CODES)}]{name}@{code}', end=' ... ')
+                self.logger(f'>>> [{str(n).zfill(2)}/{len(SCHEMA.CODES)}] {name}@{code}', end=' ... ')
                 obj = self._fetch_group(code, self.server_date, logger=self.logger)
                 if obj.empty:
-                    raise ConnectionError(f'Failed to fetch {code} / {name}')
+                    raise ConnectionError(f'FAILED TO FETCH {code} / {name}')
                 objs.append(obj)
 
             reits = DataFrame(data={'CMP_KOR': SCHEMA.REITS.values(), 'CMP_CD': SCHEMA.REITS.keys()})

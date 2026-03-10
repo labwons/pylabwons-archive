@@ -86,39 +86,44 @@ class Baseline(DataFrameHeir):
         return series.astype(str)
 
     def get_tickets(self, *tickets) -> List[str]:
-        if HOST == 'hkefico':
-            return []
         if tickets:
             return list(tickets)
 
+        if HOST == 'hkefico':
+            return []
+
         tickets = []
-        if HOST == 'github_action':
-            if RUNTIME == 'schedule':
-                if not self.td.closed == self.td.clock('%Y%m%d'):
-                    return tickets
-
-                if self.td.clock().hour <= 18:
-                    clock = self.td.clock()
-                    while (clock.hour == 15) and (15 <= clock.minute < 31):
-                        time.sleep(30)
-                        clock = self.td.clock()
-                    return ['market']
-
-                else:
-                    return ['number', 'sector']
-
         if not self.market.date == self.td.closed == self.dates.market.date:
             tickets.append('market')
 
         if not self.sector.date == self.sector.server_date == self.dates.sector.date:
             tickets.append('sector')
 
-        if not self.number.date == self.number.server_date == self.dates.number.date:
-            if not self.number.server_date in ['failed', ''] and self.td.clock().hour > 18:
+        if not self.number.server_date in ['failed', '']:
+            if not self.number.date == self.number.server_date == self.dates.number.date:
                 tickets.append('number')
 
-        return tickets
+        if HOST == 'github_action' and RUNTIME == 'schedule':
+            if not self.td.closed == self.td.clock('%Y%m%d'):
+                return []
 
+            if self.td.clock().hour <= 18:
+                clock = self.td.clock()
+                while (clock.hour == 15) and (15 <= clock.minute < 31):
+                    time.sleep(30)
+                    clock = self.td.clock()
+                if 'sector' in tickets:
+                    tickets.remove('sector')
+                if 'number' in tickets:
+                    tickets.remove('number')
+                return tickets
+
+            else:
+                if 'market' in tickets:
+                    tickets.remove('market')
+                return tickets
+
+        return tickets
 
     def build(self, *tickets):
         tickets = self.get_tickets(*tickets)
@@ -171,7 +176,7 @@ class Baseline(DataFrameHeir):
                 json.dump(self.dates, f, ensure_ascii=False, indent=4)
         else:
             self.logger('>>> NOTHING TO BUILD')
-        self.logger(self.dates)
+        self.logger(f'\n{self.dates}')
         return
 
 

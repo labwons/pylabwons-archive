@@ -45,7 +45,7 @@ def marketfetch(name):
         @functools.wraps(func)
         def wrapper(self, *args, **kwargs):
             if hasattr(self, 'logger') and self.logger:
-                self.logger(f"FETCH [{name}]", end=" ... ")
+                self.logger(f">>> [{name}]", end=" ... ")
 
             try:
                 result = func(self, *args, **kwargs)
