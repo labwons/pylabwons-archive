@@ -97,14 +97,14 @@ class Baseline(DataFrameHeir):
                 if not self.td.closed == self.td.clock('%Y%m%d'):
                     return tickets
 
-                if self.td.clock().hour <= 17:
+                if self.td.clock().hour <= 18:
                     clock = self.td.clock()
                     while (clock.hour == 15) and (15 <= clock.minute < 31):
                         time.sleep(30)
                         clock = self.td.clock()
                     return ['market']
 
-                if self.td.clock().hour > 17:
+                else:
                     return ['number']
 
         if not self.market.date == self.td.closed == self.dates.market.date:
@@ -120,27 +120,11 @@ class Baseline(DataFrameHeir):
         return tickets
 
 
-
-
-
-    def is_buildable(self) -> bool:
-        if HOST == 'github_action' and RUNTIME in ["push", "schedule"]:
-            if self.td.closed != self.td.clock("%Y%m%d"):
-                return False
-            clock = self.td.clock()
-            while (clock.hour == 15) and (15 <= clock.minute < 31):
-                time.sleep(30)
-                clock = self.td.clock()
-            return True
-        return True
-
     def build(self, *tickets):
-
         tickets = self.get_tickets(*tickets)
 
         self.logger(f'[BUILD BASELINE] ON {self.td.closed} @{HOST.upper()} / {RUNTIME.upper()}')
         self.logger(f'>>> TICKETS: {tickets}')
-
         if 'market' in tickets:
             try:
                 self.market.fetch()
