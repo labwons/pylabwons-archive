@@ -38,10 +38,10 @@ class PATH:
     ROOT = _get_root()
     DATA = ROOT / "data"
     PARQUET = DataDictionary(
-        AFTERMARKET = DATA / "src/aftermarket.parquet",
+        MARKET = DATA / "src/market.parquet",
         BASELINE = DATA / "src/baseline.parquet",
-        WICS = DATA / "src/wics.parquet",
-        NUMBERS = DATA / "src/numbers.parquet",
+        SECTOR = DATA / "src/sector.parquet",
+        NUMBER = DATA / "src/number.parquet",
     )
     CSV = DataDictionary(
         BASELINE = DATA / "src/baseline.csv"

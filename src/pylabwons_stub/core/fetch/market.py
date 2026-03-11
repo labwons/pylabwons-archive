@@ -8,11 +8,11 @@ import pandas as pd
 import requests, io, time
 
 
-class AfterMarket(DataFrameHeir):
+class Market(DataFrameHeir):
 
     _metadata = ['logger']
 
-    def __init__(self, src:str=SCHEMA.AFTERMARKET, **kwargs):
+    def __init__(self, src:str=SCHEMA.MARKET, **kwargs):
         super().__init__(src, **kwargs)
         self.logger = kwargs.get('logger', print)
         return
@@ -121,7 +121,7 @@ class AfterMarket(DataFrameHeir):
 
 
 if __name__ == '__main__':
-    market = AfterMarket()
+    market = Market()
     # market.fetch()
     print(market)
     # print(market.tradingDate)

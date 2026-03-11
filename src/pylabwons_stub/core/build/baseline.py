@@ -1,8 +1,8 @@
 from pylabwons_stub.schema.dataframe import DataFrameHeir
 from pylabwons_stub.schema.const.baseline import BASELINE
-from pylabwons_stub.core.fetch.aftermarket import AfterMarket
-from pylabwons_stub.core.fetch.numbers import Numbers
-from pylabwons_stub.core.fetch.wics import Wics
+from pylabwons_stub.core.fetch.market import Market
+from pylabwons_stub.core.fetch.number import Number
+from pylabwons_stub.core.fetch.sector import Sector
 from pylabwons_stub.env import HOST, PATH, RUNTIME
 from datetime import datetime
 from typing import Any, Callable, List
@@ -25,9 +25,9 @@ class Baseline(DataFrameHeir):
         with open(PATH.JSON.BUILD, 'r', encoding='utf-8') as f:
             self.dates = lw.DataDictionary(json.load(f))
 
-        self.market = AfterMarket(src=PATH.PARQUET.AFTERMARKET, logger=logger)
-        self.number = Numbers(src=PATH.PARQUET.NUMBERS, logger=logger)
-        self.sector = Wics(src=PATH.PARQUET.WICS, logger=logger)
+        self.market = Market(src=PATH.PARQUET.MARKET, logger=logger)
+        self.number = Number(src=PATH.PARQUET.NUMBER, logger=logger)
+        self.sector = Sector(src=PATH.PARQUET.SECTOR, logger=logger)
 
         try:
             super().__init__(pd.read_parquet(PATH.PARQUET.BASELINE, engine='pyarrow'))
@@ -103,26 +103,22 @@ class Baseline(DataFrameHeir):
             if not self.number.date == self.number.server_date == self.dates.number.date:
                 tickets.append('number')
 
-        if HOST == 'github_action' and RUNTIME == 'schedule':
-            if not self.td.closed == self.td.clock('%Y%m%d'):
-                return []
+        if HOST == 'github_action':
+            if RUNTIME == 'schedule':
+                if not self.td.closed == self.td.clock('%Y%m%d'):
+                    return []
 
-            if self.td.clock().hour <= 18:
-                clock = self.td.clock()
-                while (clock.hour == 15) and (15 <= clock.minute < 31):
+                while self.td.is_open():
                     time.sleep(30)
-                    clock = self.td.clock()
+
+            if 9 < self.td.clock().hour <= 18:
                 if 'sector' in tickets:
                     tickets.remove('sector')
                 if 'number' in tickets:
                     tickets.remove('number')
-                return tickets
-
             else:
                 if 'market' in tickets:
                     tickets.remove('market')
-                return tickets
-
         return tickets
 
     def build(self, *tickets):
@@ -130,12 +126,12 @@ class Baseline(DataFrameHeir):
         self.logger(f'[BUILD BASELINE]')
         self.logger(f'| RUNS ON "{HOST.upper()} / {RUNTIME.upper()}"')
         self.logger(f'| TRADING DATE: {self.td.closed}')
-        self.logger(f'| TICKETS: {tickets}')
+        self.logger(f'| TICKETS: {"NO TICKETS" if not tickets else tickets}')
 
         if 'market' in tickets:
             try:
                 self.market.fetch()
-                self.market.to_parquet(PATH.PARQUET.AFTERMARKET, engine='pyarrow')
+                self.market.to_parquet(PATH.PARQUET.MARKET, engine='pyarrow')
                 self.dates.market.date = str(self.market.date)
             except (ConnectionError, IndexError, KeyError, Exception) as e:
                 self.logger(f'>>> FAILED TO BUILD AFTER MARKET: {e}')
@@ -143,7 +139,7 @@ class Baseline(DataFrameHeir):
         if 'sector' in tickets:
             try:
                 self.sector.fetch()
-                self.sector.to_parquet(PATH.PARQUET.WICS, engine='pyarrow')
+                self.sector.to_parquet(PATH.PARQUET.SECTOR, engine='pyarrow')
                 self.dates.sector.date = str(self.sector.date)
             except (ConnectionError, IndexError, KeyError, Exception) as e:
                 self.logger(f'>>> FAILED TO BUILD SECTOR: {e}')
@@ -161,7 +157,7 @@ class Baseline(DataFrameHeir):
                         continue
 
                     self.number[col] = self._typecast(self.number[col])
-                self.number.to_parquet(PATH.PARQUET.NUMBERS, engine='pyarrow')
+                self.number.to_parquet(PATH.PARQUET.NUMBER, engine='pyarrow')
                 self.dates.number.date = str(self.number.date)
             except (ConnectionError, IndexError, KeyError, Exception) as e:
                 self.logger(f'>>> FAILED TO BUILD NUMBERS: {e}')
@@ -174,9 +170,10 @@ class Baseline(DataFrameHeir):
             self.dates.baseline.date = self.td.closed
             with open(PATH.JSON.BUILD, 'w', encoding='utf-8') as f:
                 json.dump(self.dates, f, ensure_ascii=False, indent=4)
-        else:
-            self.logger('>>> NOTHING TO BUILD')
-        self.logger(f'\n{self.dates}')
+
+        self.logger('| LOG DATE')
+        for key, value in self.dates.items():
+            self.logger(f'>>> {key}: {value}')
         return
 
 

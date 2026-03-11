@@ -7,11 +7,11 @@ import pandas as pd
 import re, requests, time
 
 
-class Wics(DataFrameHeir):
+class Sector(DataFrameHeir):
     # WISE INDUSTRY CLASSIFICATION SYSTEM
     _metadata = ['logger']
 
-    def __init__(self, src:str=SCHEMA.WICS, **kwargs):
+    def __init__(self, src:str=SCHEMA.SECTOR, **kwargs):
         super().__init__(src, **kwargs)
         self.logger = kwargs.get('logger', print)
         return
@@ -100,5 +100,5 @@ class Wics(DataFrameHeir):
 
 
 if __name__ == "__main__":
-    wics = Wics()
-    print(wics)
+    sector = Sector()
+    print(sector)

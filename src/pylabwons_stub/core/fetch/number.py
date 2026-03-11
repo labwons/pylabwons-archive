@@ -6,11 +6,11 @@ import pandas as pd
 import time
 
 
-class Numbers(DataFrameHeir):
+class Number(DataFrameHeir):
 
     _metadata = ['logger', 'progress_bar']
 
-    def __init__(self, src:str=SCHEMA.NUMBERS, **kwargs):
+    def __init__(self, src:str=SCHEMA.NUMBER, **kwargs):
         super().__init__(src, **kwargs)
         self.logger = kwargs.get('logger', print)
         self.progress_bar:bool = kwargs.get('progress_bar', True)
@@ -50,5 +50,5 @@ class Numbers(DataFrameHeir):
 
 
 if __name__ == '__main__':
-    numbers = Numbers()
-    print(numbers)
+    numbers = Number()
+    print(numbers.date)
