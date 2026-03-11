@@ -1,11 +1,12 @@
 __all__ = [
-    "Market",
     "Baseline",
+    "Market",
+    "MarketMap",
     "Number",
     "Sector",
     "HOST",
     "PATH",
 ]
 
-from .core import Market, Baseline, Number, Sector
+from .core import Baseline, Market, MarketMap, Number, Sector
 from .env import HOST, PATH

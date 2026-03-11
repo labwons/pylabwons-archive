@@ -12,3 +12,6 @@ if __name__ == "__main__":
     baseline.number.progress_bar = False
     baseline.build()
 
+    market_map = lws.MarketMap(logger=logger)
+    market_map.deploy()
+
