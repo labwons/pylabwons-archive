@@ -18,6 +18,7 @@ class MarketMap(Baseline):
 
     def __init__(self, logger:Callable=print):
         super().__init__(logger)
+        self.logger(f'DEPLOY MARKET MAP ON {self.td.closed}')
 
         self._cleanse()
         self._extract()
@@ -42,10 +43,12 @@ class MarketMap(Baseline):
         self['meta'] = self['name'] + '(' + self.index + ')<br>' \
                      + '시가총액: ' + self['marketCap'].apply(tools.int2krw) + '원<br>' \
                      + '종가: ' + self['close'].apply(lambda x: f'{x:,d}원')
-        keys = list(MARKETMAP.keys()) + ['name', 'size', 'ceil', 'meta']
+        keys = list(MARKETMAP.keys()) + \
+               ['name', 'size', 'ceil', 'meta',
+                'industryName', 'industryCode', 'sectorName', 'sectorCode']
         self.drop(
             inplace=True,
-            columns=[c for c, meta in MARKETMAP.items() if not c in keys]
+            columns=[c for c in self.columns if not c in keys]
         )
         return
 
@@ -58,15 +61,10 @@ class MarketMap(Baseline):
             return f'#{hex(int(r))[2:]}{hex(int(g))[2:]}{hex(int(b))[2:]}'
 
         def __paint(_val, _scale, _color, _default_index):
-            try:
-                _val = float(_val)
-            except ValueError:
-                return _color[_default_index]
-
             if _val <= _scale[0]:
                 return __rgb2hex(*_color[0])
             if _val >= _scale[-1]:
-                return __rgb2hex(*_color[1])
+                return __rgb2hex(*_color[-1])
 
             n = 0
             while n < len(_scale) - 1:
@@ -86,7 +84,8 @@ class MarketMap(Baseline):
             )
         objs = {}
         for key, meta in MARKETMAP.items():
-            objs[f'{key}_c'] = self[key].apply(__paint, args=(meta.scale, COLORS[meta.color], meta.index))
+            objs[f'{key}_c'] = pd.to_numeric(self[key], errors='coerce') \
+                               .apply(__paint, args=(meta.scale, COLORS[meta.color], meta.index))
         colors = pd.concat(objs, axis=1)
         colors.iloc[-2:] = "#C8C8C8"
         super(Baseline, self).__init__(pd.concat([self, colors], axis=1))
@@ -116,10 +115,10 @@ class MarketMap(Baseline):
                 try:
                     data = pd.to_numeric(df[col], errors='coerce')
                     if MARKETMAP[col].method == 'weighted':
-                        obj[col] = (w * data).sum()
+                        obj[col] = round((w * data).sum(), 2)
 
                     if MARKETMAP[col].method == 'arithmetic':
-                        obj[col] = data.mean()
+                        obj[col] = round(data.mean(), 2)
 
                 except (ValueError, TypeError) as e:
                     self.logger(f'Error calculating arithmetic: {col}({df[col].dtype})@{name} / {e}')
@@ -200,13 +199,14 @@ class MarketMap(Baseline):
         return self[~self.index.str.startswith('W')]
 
     def deploy(self):
+        date = f'{self.td.closed[:4]}-{self.td.closed[4:6]}-{self.td.closed[6:8]}'
         with open(file=PATH.HTML.MARKETMAP, mode='w', encoding='utf-8') as file:
             file.write(
                 Environment(loader=FileSystemLoader(PATH.HTML.TEMPLATE)) \
                 .get_template('marketmap-1.0.0.html') \
                 .render({
                     "title": "LAB￦ONS: \uc2dc\uc7a5\uc9c0\ub3c4",
-                    "tradingDate": f'{self.td.closed}\u0020\uc885\uac00\u0020\uae30\uc900',
+                    "tradingDate": f'{date}\u0020\uc885\uac00\u0020\uae30\uc900',
                     "statusValue": self.stat.to_dict(),
                     "srcTicker": self.to_json(orient='index'),
                     "srcIndicatorOpt": dumps(self.metadata),
@@ -253,9 +253,11 @@ if __name__ == "__main__":
     mmap = MarketMap()
     # print(mmap)
     # print(mmap.metadata)
+    # print(mmap.columns.tolist())
 
     # data = mmap.with_005930
     # print(data)
 
     # mmap.test_plot()
     mmap.deploy()
+    print(mmap[mmap['name'] == '증권'].iloc[0])

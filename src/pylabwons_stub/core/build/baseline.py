@@ -41,6 +41,7 @@ class Baseline(DataFrameHeir):
         return
 
     def _capture_baseline(self, *args):
+        self.logger(f'CAPTURE NEW BASELINE ON {self.td.closed}')
         super().__init__(*args, method='join')
 
         # Data Cleansing and Type casting
@@ -73,7 +74,7 @@ class Baseline(DataFrameHeir):
             try:
                 return pd.to_datetime(series)
             except (TypeError, ValueError) as _e:
-                self.logger(f'Unable to cast {series.name}: {series.dtype} -> {dtype}: {_e}')
+                self.logger(f'>>> Unable to cast {series.name}: {series.dtype} -> {dtype}: {_e}')
                 return series.astype(str)
         error = ''
         for _dtype in [int, float]:
@@ -82,7 +83,7 @@ class Baseline(DataFrameHeir):
             except (TypeError, ValueError) as _e:
                 error = _e
                 continue
-        self.logger(f'Unable to cast <{series.name}: {series.dtype} -> numeric>, {error}')
+        self.logger(f'>>> Unable to cast <{series.name}: {series.dtype} -> numeric>, {error}')
         return series.astype(str)
 
     def get_tickets(self, *tickets) -> List[str]:

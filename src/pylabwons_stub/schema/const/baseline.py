@@ -19,12 +19,12 @@ BASELINE = SCHEMA = lw.DataDictionary(
     ),
     marketCap=lw.DataDictionary(
         kor_name='시가총액',
-        unit='',
+        unit='원',
         data_type=int,
     ),
     close=lw.DataDictionary(
         kor_name='종가',
-        unit='',
+        unit='원',
         data_type=int,
     ),
     volume=lw.DataDictionary(
@@ -34,57 +34,57 @@ BASELINE = SCHEMA = lw.DataDictionary(
     ),
     amount=lw.DataDictionary(
         kor_name='거래대금',
-        unit='',
+        unit='원',
         data_type=int,
     ),
     returnOn1Day=lw.DataDictionary(
         kor_name='1일수익률',
-        unit='',
+        unit='%',
         data_type=float,
     ),
     returnOn1Week=lw.DataDictionary(
         kor_name='1주수익률',
-        unit='',
+        unit='%',
         data_type=float,
     ),
     returnOn1Month=lw.DataDictionary(
         kor_name='1개월수익률',
-        unit='',
+        unit='%',
         data_type=float,
     ),
     returnOn3Months=lw.DataDictionary(
         kor_name='3개월수익률',
-        unit='',
+        unit='%',
         data_type=float,
     ),
     returnOn6Months=lw.DataDictionary(
         kor_name='6개월수익률',
-        unit='',
+        unit='%',
         data_type=float,
     ),
     returnOn1Year=lw.DataDictionary(
         kor_name='1년수익률',
-        unit='',
+        unit='%',
         data_type=float,
     ),
     fiftyTwoWeekHigh=lw.DataDictionary(
         kor_name='52주최고가',
-        unit='',
+        unit='원',
         data_type=float,
     ),
     fiftyTwoWeekLow=lw.DataDictionary(
         kor_name='52주최저가',
-        unit='',
+        unit='원',
         data_type=float,
     ),
     fiftyTwoWeekHighPct=lw.DataDictionary(
         kor_name='52주최고가대비',
-        unit='',
+        unit='%',
         data_type=float,
     ),
     fiftyTwoWeekLowPct=lw.DataDictionary(
         kor_name='52주최저가대비',
-        unit='',
+        unit='%',
         data_type=float,
     ),
 
@@ -110,7 +110,7 @@ BASELINE = SCHEMA = lw.DataDictionary(
     ),
     sharesFloatingRate=lw.DataDictionary(
         kor_name='유동주식비율',
-        unit='',
+        unit='%',
         data_type=float,
     ),
     foreignSharesHolding=lw.DataDictionary(
@@ -120,7 +120,7 @@ BASELINE = SCHEMA = lw.DataDictionary(
     ),
     foreignRate=lw.DataDictionary(
         kor_name='외국인보유비율',
-        unit='',
+        unit='%',
         data_type=float,
     ),
     foreignSharesLimit=lw.DataDictionary(
@@ -130,7 +130,7 @@ BASELINE = SCHEMA = lw.DataDictionary(
     ),
     foreignRateByLimit=lw.DataDictionary(
         kor_name='외국인한도소진율',
-        unit='',
+        unit='%',
         data_type=float,
     ),
 
@@ -152,27 +152,27 @@ BASELINE = SCHEMA = lw.DataDictionary(
 
     trailingRevenue=lw.DataDictionary(
         kor_name='4분기합산매출',
-        unit='',
+        unit='원',
         data_type=float,
     ),
     trailingProfit=lw.DataDictionary(
         kor_name='4분기합산영업이익',
-        unit='',
+        unit='원',
         data_type=float,
     ),
     trailingNetProfit=lw.DataDictionary(
         kor_name='4분기합산당기순이익',
-        unit='',
+        unit='원',
         data_type=float,
     ),
     trailingProfitRate=lw.DataDictionary(
         kor_name='4분기합산기준영업이익률',
-        unit='',
+        unit='%',
         data_type=float,
     ),
     trailingEps=lw.DataDictionary(
         kor_name='4분기합산Eps',
-        unit='',
+        unit='원',
         data_type=float,
     ),
     trailingPs=lw.DataDictionary(
@@ -188,108 +188,108 @@ BASELINE = SCHEMA = lw.DataDictionary(
 
     yoyRevenue=lw.DataDictionary(
         kor_name='yoy매출',
-        unit='',
+        unit='%',
         data_type=float,
     ),
     yoyProfit=lw.DataDictionary(
         kor_name='yoy영업이익',
-        unit='',
+        unit='%',
         data_type=float,
     ),
     yoyNetProfit=lw.DataDictionary(
         kor_name='yoy당기순이익',
-        unit='',
+        unit='%',
         data_type=float,
     ),
     yoyProfitRate=lw.DataDictionary(
         kor_name='yoy영업이익률',
-        unit='',
+        unit='%',
         data_type=float,
     ),
     yoyEps=lw.DataDictionary(
         kor_name='yoyEps',
-        unit='',
+        unit='%',
         data_type=str,
     ),
 
     fiscalRevenue=lw.DataDictionary(
         kor_name='직전결산연도매출',
-        unit='',
+        unit='원',
         data_type=float,
     ),
     fiscalRevenueGrowth=lw.DataDictionary(
         kor_name='직전결산연도매출성장률',
-        unit='',
+        unit='%',
         data_type=float,
     ),
     fiscalProfit=lw.DataDictionary(
         kor_name='직전결산연도영업이익',
-        unit='',
+        unit='원',
         data_type=float,
     ),
     fiscalProfitRate=lw.DataDictionary(
         kor_name='직전결산연도영업이익률',
-        unit='',
+        unit='%',
         data_type=float,
     ),
     fiscalProfitGrowth=lw.DataDictionary(
         kor_name='직전결산연도영업이익성장률',
-        unit='',
+        unit='%',
         data_type=str,
     ),
     fiscalProfitRateGrowth=lw.DataDictionary(
         kor_name='직전결산연도영업이익률성장률',
-        unit='',
+        unit='%',
         data_type=str,
     ),
     fiscalNetProfit=lw.DataDictionary(
         kor_name='직전결산연도당기순이익',
-        unit='',
+        unit='원',
         data_type=float,
     ),
     fiscalNetProfitGrowth=lw.DataDictionary(
         kor_name='직전결산연도당기순이익성장률',
-        unit='',
+        unit='%',
         data_type=float,
     ),
     fiscalAsset=lw.DataDictionary(
         kor_name='직전결산연도자산',
-        unit='',
+        unit='원',
         data_type=float,
     ),
     fiscalAssetGrowth=lw.DataDictionary(
         kor_name='직전결산연도자산증감률',
-        unit='',
+        unit='%',
         data_type=float,
     ),
     fiscalCapital=lw.DataDictionary(
         kor_name='직전결산연도자본',
-        unit='',
+        unit='원',
         data_type=float,
     ),
     fiscalDebt=lw.DataDictionary(
         kor_name='직전결산연도부채',
-        unit='',
+        unit='원',
         data_type=float,
     ),
     fiscalDebtGrowth=lw.DataDictionary(
         kor_name='직전결산연도부채증감률',
-        unit='',
+        unit='%',
         data_type=float,
     ),
     fiscalDebtRatio=lw.DataDictionary(
         kor_name='직전결산연도부채율',
-        unit='',
+        unit='%',
         data_type=float,
     ),
     fiscalRetentionRate=lw.DataDictionary(
         kor_name='직전결산연도유보율',
-        unit='',
+        unit='%',
         data_type=float,
     ),
     fiscalDividendYield=lw.DataDictionary(
         kor_name='직전결산연도배당수익율',
-        unit='',
+        unit='%',
         data_type=float,
     ),
     fiscalPayoutRatio=lw.DataDictionary(
@@ -299,27 +299,27 @@ BASELINE = SCHEMA = lw.DataDictionary(
     ),
     fiscalPayoutRatioGrowth=lw.DataDictionary(
         kor_name='직전결산연도배당성향증감률',
-        unit='',
+        unit='%',
         data_type=float,
     ),
     returnOnAsset=lw.DataDictionary(
         kor_name='직전결산연도ROA',
-        unit='',
+        unit='%',
         data_type=float,
     ),
     returnOnEquity=lw.DataDictionary(
         kor_name='직전결산연도ROE',
-        unit='',
+        unit='%',
         data_type=float,
     ),
     fiscalEps=lw.DataDictionary(
         kor_name='직전결산연도Eps',
-        unit='',
+        unit='원',
         data_type=float,
     ),
     fiscalEpsGrowth=lw.DataDictionary(
         kor_name='직전결산연도Eps성장률',
-        unit='',
+        unit='%',
         data_type=float,
     ),
     fiscalPe=lw.DataDictionary(
@@ -334,18 +334,18 @@ BASELINE = SCHEMA = lw.DataDictionary(
     ),
     fiscalDps=lw.DataDictionary(
         kor_name='직전결산연도Dps',
-        unit='',
+        unit='원',
         data_type=float,
     ),
     fiscalDpsGrowth=lw.DataDictionary(
         kor_name='직전결산연도Dps성장률',
-        unit='',
+        unit='%',
         data_type=float,
     ),
 
     forwardEps=lw.DataDictionary(
         kor_name='12개월선행Eps',
-        unit='',
+        unit='원',
         data_type=float,
     ),
     fowardPe=lw.DataDictionary(
@@ -365,12 +365,12 @@ BASELINE = SCHEMA = lw.DataDictionary(
     ),
     targetPrice=lw.DataDictionary(
         kor_name='목표가',
-        unit='',
+        unit='원',
         data_type=float,
     ),
     targetPricePct=lw.DataDictionary(
         kor_name='목표가대비',
-        unit='',
+        unit='%',
         data_type=float,
     ),
     nOfEstimations=lw.DataDictionary(
@@ -380,74 +380,74 @@ BASELINE = SCHEMA = lw.DataDictionary(
     ),
     estimatedRevenue=lw.DataDictionary(
         kor_name='추정매출',
-        unit='',
+        unit='원',
         data_type=float,
     ),
     estimatedRevenueGrowth=lw.DataDictionary(
         kor_name='추정매출성장률',
-        unit='',
+        unit='%',
         data_type=float,
     ),
 
     estimatedProfit=lw.DataDictionary(
         kor_name='추정영업이익',
-        unit='',
+        unit='원',
         data_type=float,
     ),
     estimatedProfitRate=lw.DataDictionary(
         kor_name='추정영업이익률',
-        unit='',
+        unit='%',
         data_type=float,
     ),
     estimatedProfitGrowth=lw.DataDictionary(
         kor_name='추정영업이익성장률',
-        unit='',
+        unit='%',
         data_type=str,
     ),
     estimatedProfitRateGrowth=lw.DataDictionary(
         kor_name='추정영업이익률성장률',
-        unit='',
+        unit='%',
         data_type=float,
     ),
     estimatedNetProfit=lw.DataDictionary(
         kor_name='추정당기순이익',
-        unit='',
+        unit='원',
         data_type=float,
     ),
     estimatedNetProfitGrowth=lw.DataDictionary(
         kor_name='추정당기순이익성장률',
-        unit='',
+        unit='%',
         data_type=float,
     ),
 
     estimatedAsset=lw.DataDictionary(
         kor_name='추정자산',
-        unit='',
+        unit='원',
         data_type=float,
     ),
     estimatedAssetGrowth=lw.DataDictionary(
         kor_name='추정자산증감률',
-        unit='',
+        unit='%',
         data_type=float,
     ),
     estimatedDebt=lw.DataDictionary(
         kor_name='추정부채',
-        unit='',
+        unit='원',
         data_type=float,
     ),
     estimatedDebtGrowth=lw.DataDictionary(
         kor_name='추정부채증감률',
-        unit='',
+        unit='%',
         data_type=float,
     ),
     estimatedEps=lw.DataDictionary(
         kor_name='추정Eps',
-        unit='',
+        unit='원',
         data_type=float,
     ),
     estimatedEpsGrowth=lw.DataDictionary(
         kor_name='추정Eps성장률',
-        unit='',
+        unit='%',
         data_type=float,
     ),
     estimatedPe=lw.DataDictionary(
@@ -457,12 +457,12 @@ BASELINE = SCHEMA = lw.DataDictionary(
     ),
     estimatedDps=lw.DataDictionary(
         kor_name='추정Dps',
-        unit='',
+        unit='원',
         data_type=float,
     ),
     estimatedDpsGrowth=lw.DataDictionary(
         kor_name='추정Dps성장률',
-        unit='',
+        unit='%',
         data_type=float,
     ),
     estimatedPayoutRatio=lw.DataDictionary(
@@ -472,7 +472,7 @@ BASELINE = SCHEMA = lw.DataDictionary(
     ),
     estimatedPayoutRatioGrowth=lw.DataDictionary(
         kor_name='추정배당성향증감률',
-        unit='',
+        unit='%',
         data_type=str,
     ),
 
