@@ -9,21 +9,21 @@ from typing import Any, Callable, List
 import numpy as np
 import pandas as pd
 import pylabwons as lw
-import json, time
+import json, os, time
 pd.set_option('display.expand_frame_repr', False)
-
-
 pd.set_option('future.no_silent_downcasting', True)
+
+
 class Baseline(DataFrameHeir):
 
-    _metadata = ['dates', 'logger', 'td',
+    _metadata = ['logger', 'log', 'td',
                  'market', 'number', 'sector']
 
     def __init__(self, logger:Callable=print):
         self.logger = logger
         self.td = lw.TradingDate()
         with open(PATH.JSON.BUILD, 'r', encoding='utf-8') as f:
-            self.dates = lw.DataDictionary(json.load(f))
+            self.log = lw.DataDictionary(json.load(f))
 
         self.market = Market(src=PATH.PARQUET.MARKET, logger=logger)
         self.number = Number(src=PATH.PARQUET.NUMBER, logger=logger)
@@ -93,14 +93,14 @@ class Baseline(DataFrameHeir):
             return []
 
         tickets = []
-        if not self.market.date == self.td.closed == self.dates.market.date:
+        if not self.market.date == self.td.closed == self.log.market.date:
             tickets.append('market')
 
-        if not self.sector.date == self.sector.server_date == self.dates.sector.date:
+        if not self.sector.date == self.sector.server_date == self.log.sector.date:
             tickets.append('sector')
 
         if not self.number.server_date in ['failed', '']:
-            if not self.number.date == self.number.server_date == self.dates.number.date:
+            if not self.number.date == self.number.server_date == self.log.number.date:
                 tickets.append('number')
 
         if HOST == 'github_action':
@@ -111,7 +111,7 @@ class Baseline(DataFrameHeir):
                 while self.td.is_open():
                     time.sleep(30)
 
-            if 9 < self.td.clock().hour <= 18:
+            if 9 <= self.td.clock().hour < 19:
                 if 'sector' in tickets:
                     tickets.remove('sector')
                 if 'number' in tickets:
@@ -132,7 +132,7 @@ class Baseline(DataFrameHeir):
             try:
                 self.market.fetch()
                 self.market.to_parquet(PATH.PARQUET.MARKET, engine='pyarrow')
-                self.dates.market.date = str(self.market.date)
+                self.log.market.date = str(self.market.date)
             except (ConnectionError, IndexError, KeyError, Exception) as e:
                 self.logger(f'>>> FAILED TO BUILD AFTER MARKET: {e}')
 
@@ -140,7 +140,7 @@ class Baseline(DataFrameHeir):
             try:
                 self.sector.fetch()
                 self.sector.to_parquet(PATH.PARQUET.SECTOR, engine='pyarrow')
-                self.dates.sector.date = str(self.sector.date)
+                self.log.sector.date = str(self.sector.date)
             except (ConnectionError, IndexError, KeyError, Exception) as e:
                 self.logger(f'>>> FAILED TO BUILD SECTOR: {e}')
 
@@ -150,7 +150,7 @@ class Baseline(DataFrameHeir):
                 self.number.fetch(*base.index)
                 for col in self.number.columns:
                     if col in ['sharesOutstanding', 'sharesPreferred', 'sharesFloating']:
-                        self.number[col] = self.number[col].fillna(0).infer_objects(copy=False)
+                        self.number[col] = self.number[col].astype(float).fillna(0).astype(int)
 
                     if BASELINE[col].data_type == str:
                         self.number[col] = self.number[col].astype(str)
@@ -158,21 +158,31 @@ class Baseline(DataFrameHeir):
 
                     self.number[col] = self._typecast(self.number[col])
                 self.number.to_parquet(PATH.PARQUET.NUMBER, engine='pyarrow')
-                self.dates.number.date = str(self.number.date)
+                self.log.number.date = str(self.number.date)
             except (ConnectionError, IndexError, KeyError, Exception) as e:
                 self.logger(f'>>> FAILED TO BUILD NUMBERS: {e}')
 
         if tickets:
             self._capture_baseline(self.sector, self.market, self.number)
             self.to_parquet(PATH.PARQUET.BASELINE, engine='pyarrow')
+            self.to_parquet(PATH.LOG / f'baseline-{self.td.closed}.parquet', engine='pyarrow')
             self.to_csv(PATH.CSV.BASELINE, encoding='utf-8', index=True)
 
-            self.dates.baseline.date = self.td.closed
+            self.log.baseline.date = self.td.closed
+            if len(os.listdir(PATH.LOG)) > 20:
+                logs = os.listdir(PATH.LOG)
+                logs.sort()
+                dump = logs[:-20]
+                self.logger(f'| SHIFT AND CLEAN BASELINE LOG')
+                self.logger(f'>>> DROP: {dump}')
+                for f in dump:
+                    (PATH.LOG / f).unlink(missing_ok=True)
+            self.log.baseline.log = os.listdir(PATH.LOG)
             with open(PATH.JSON.BUILD, 'w', encoding='utf-8') as f:
-                json.dump(self.dates, f, ensure_ascii=False, indent=4)
+                json.dump(self.log, f, ensure_ascii=False, indent=4)
 
-        self.logger('| LOG DATE')
-        for key, value in self.dates.items():
+        self.logger('| LOG')
+        for key, value in self.log.items():
             self.logger(f'>>> {key}: {value}')
         return
 
@@ -183,6 +193,4 @@ if __name__ == "__main__":
     # print(baseline)
     # print(baseline.columns)
     baseline.build()
-    # print(baseline)
-    # print(baseline.logger)
     # baseline.to_excel(PATH.DOWNLOADS / 'baseline.xlsx')

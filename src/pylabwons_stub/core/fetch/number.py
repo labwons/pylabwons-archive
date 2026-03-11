@@ -23,7 +23,7 @@ class Number(DataFrameHeir):
     def fetch(self, *tickers:str):
         tic = time.perf_counter()
         obj = FnGuide(tickers[0])
-        self.logger(f'FETCH MARKET NUMBERS @{obj.date}')
+        self.logger(f'FETCH MARKET NUMBERS ON {obj.date}')
 
         if self.progress_bar:
             loop = auto.tqdm(enumerate(tickers[1:]))
@@ -36,7 +36,7 @@ class Number(DataFrameHeir):
             try:
                 objs.append(obj.numbers)
             except Exception as e:
-                self.logger(f">>> Error while fetching: {ticker} / {e}")
+                self.logger(f">>> FAILED TO FETCH: {ticker} / {e}")
                 continue
             if n and n % 50 == 0:
                 time.sleep(3)

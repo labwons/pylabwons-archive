@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  {% block meta %}{% endblock %}
+  {% if not local %}
+  <meta name="google-site-verification" content="bacQQ5KRvmfMs3AgsuRVh2Imw23ahtlIVVMZZhdBI7A" />
+  <meta name="google-adsense-account" content="ca-pub-7507574593260609">
+  {% endif %}
+  <title>{{ title }}</title>
+  
+  <!-- Favicons -->
+  <link href="/src/img/favicon.ico" rel="icon">
+    
+  <!-- Dependencies -->{% block dependencies %}{% endblock %}
+  {% if local %}
+  <script src="/src/js/labwons-1.0.0.js" defer></script>
+  {% else %}
+  <script src="/src/js/labwons-1.0.0.min.js" defer></script>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7507574593260609" crossorigin="anonymous"></script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-M7CRJE72D4"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-M7CRJE72D4');
+  </script>
+
+  <!-- Google Tag Manager -->
+  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-KJFQ72Z8');</script>
+  <!-- End Google Tag Manager -->
+   {% endif %}
+  
+  <!-- CSS Files -->
+  <link href="/src/css/icon.min.css" rel="stylesheet"> 
+  <link href="/src/css/select2.min.css" rel="stylesheet">
+  <link href="/src/css/swiper-bundle.min.css" rel="stylesheet">
+  <link href="/src/css/apexcharts.css" rel="stylesheet">
+  {% if local %}
+  <link href="/src/css/adsense.css" rel="stylesheet"> 
+  <link href="/src/css/style.css" rel="stylesheet">
+  {% else %}
+  <link href="/src/css/adsense.min.css" rel="stylesheet"> 
+  <link href="/src/css/style.min.css" rel="stylesheet">
+  {% endif %}
+  
+  <!-- Style Sheet -->{% block style %}{% endblock %}
+  
+  <!-- Data -->{% block data %}{% endblock %}
+</head>
+
+<body>
+  <header id="header" class="header">
+    <div class="container container-header">
+      <a href="/" class="logo d-flex align-items-center me-auto">
+        {% if not local %}<img src="/src/img/logo-text.png" alt="">{% endif %}
+      </a>
+      <nav id="navmenu" class="navmenu">
+        <ul>
+          <li><a href="/">시장 지도</a></li>
+          <li><a href="/bubble">종목 분포</a></li>
+        </ul>
+        <i class="mobile-nav-toggle bi bi-list"></i>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="section">
+      <div class="container container-leaderboard">
+        <div class="ad ad-leaderboard">
+          <div class="ad-in-leaderboard">{% if not local %}
+            <ins class="adsbygoogle"
+                 style="display:inline-block;width:728px;height:90px"
+                 data-ad-client="ca-pub-7507574593260609"
+                 data-ad-slot="4759923926">
+            </ins>
+            <script>
+              (adsbygoogle = window.adsbygoogle || []).push({});
+            </script>{% endif %}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container container-service">
+        <div class="ad ad-responsive">
+          <div class="ad-in-skyscraper">
+            {% if not local %}
+            <ins class="adsbygoogle"
+                 style="display:inline-block;width:160px;height:600px"
+                 data-ad-client="ca-pub-7507574593260609"
+                 data-ad-slot="8415406752">
+            </ins>
+            <script>
+              (adsbygoogle = window.adsbygoogle || []).push({});
+            </script>
+            {% endif %}
+          </div>
+          <div class="ad-in-display-mobile">
+            {% if not local %}
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-7507574593260609"
+                 data-ad-slot="9007042504"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true">
+            </ins>
+            <script>
+              (adsbygoogle = window.adsbygoogle || []).push({});
+            </script>
+            {% endif %}
+          </div>
+        </div>
+        <div class="content-main">
+          {% block content %}{% endblock %}
+        </div>
+      </div>
+    </section>
+    
+    <section class="section section-flow">
+      <div class="container container-service margin-bottom-60px">
+        <div class="ad ad-content">
+          <div class="ad-in-display">
+            {% if not local %}
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-7507574593260609"
+                 data-ad-slot="9705057757"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true">
+            </ins>
+            <script>
+              (adsbygoogle = window.adsbygoogle || []).push({});
+            </script>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {% block content_addon %}{% endblock %}
+
+    <section class="section section-flow">
+      <div class="container container-service margin-bottom-60px">
+        <div class="ad ad-content">
+          <div class="ad-in-display">
+            {% if not local %}
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-7507574593260609"
+                 data-ad-slot="9705057757"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true">
+            </ins>
+            <script>
+              (adsbygoogle = window.adsbygoogle || []).push({});
+            </script>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-flow">
+
+      <div class="container container-title">
+        <h2 class="main-title">SERVICE</h2>
+        <p class="sub-title">다른 기능들도 확인해보세요!</p>
+      </div>
+
+      <div class="container container-content gap-24px">
+        
+        <div class="content-service color-cyan">
+          <i class="bi bi-columns-gap"></i>
+          <h3>시장 지도</h3>
+          <p>코스피200과 코스닥150 종목을 섹터/업종 별 시가총액과 투자지표를 각각 크기와 색깔로 표시하였습니다. 시장을 <strong>직관적</strong>으로 이해할 수 있습니다.</p>
+          <a href="/" class="goto-service"><span>바로가기</span><i class="bi bi-arrow-right"></i></a>
+        </div>
+
+        <div class="content-service color-orange">
+          <i class="bi bi-pin-map"></i>
+          <h3>종목 발굴</h3>
+          <p>코스피와 코스닥 시가총액 중위값 이상의 약 1,300여개 종목을 2차원 산포도로 표시하였습니다. <strong>종목 발굴</strong>에 유용하게 사용할 수 있습니다.</p>
+          <a href="/bubble" class="goto-service"><span>바로가기</span><i class="bi bi-arrow-right"></i></a>
+        </div>
+        
+        <div class="content-service color-teal">
+          <i class="bi bi-graph-up"></i>
+          <h3>경제 지표</h3>
+          <p>한국은행과 기타 경제 기관에서 제공하는 거시 경제 지표를 비교하며 볼 수 있습니다. 경제 흐름을 보며 <strong>리스크 관리</strong>를 할 수 있습니다.</p>
+          <a href="/macro" class="goto-service"><span>바로가기</span><i class="bi bi-arrow-right"></i></a>
+        </div>
+
+  <!-- <div class="content-service color-navy">
+          <i class="bi bi-list-check"></i>
+          <h3>포트폴리오</h3>
+          <p>서비스 준비 중입니다.</p>
+          <a href="#" class="goto-service"><span>바로가기</span><i class="bi bi-arrow-right"></i></a>
+        </div> -->
+
+      </div>
+    
+    </section>
+
+    <section class="section section-flow">
+
+      <div class="container container-title">
+        <h2 class="main-title">F.A.Q</h2>
+        <p class="sub-title">자주 묻는 질문</p>
+      </div>
+
+      <div class="container container-faq">
+        <div class="content-faq">
+          {% set half = (faq|length + 1) // 2 %}
+          {% for _faq in faq %}{% if loop.index <= half %}
+          <div class="faq-item">
+            <div class="faq-q">
+              <h3>{{ _faq['q'] }}</h3>
+              <i class="faq-toggle bi bi-chevron-right"></i>
+            </div>            
+            <div class="faq-a">
+              <p>{{ _faq['a'] }}</p>
+            </div>
+          </div>
+          {% endif %}
+          {% endfor %}
+        </div>
+
+        <div class="content-faq">
+          {% for _faq in faq %}{% if half < loop.index %}
+          <div class="faq-item">
+            <div class="faq-q">
+              <h3>{{ _faq['q'] }}</h3>
+              <i class="faq-toggle bi bi-chevron-right"></i>
+            </div>            
+            <div class="faq-a">
+              <p>{{ _faq['a'] }}</p>
+            </div>
+          </div>
+          {% endif %}
+          {% endfor %}
+
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer id="footer" class="footer">
+    <div class="footer-basis container" style="background: white url(/src/img/footer-bg.png) no-repeat right top;">
+      <div class="footer-container">
+        <div class="footer-info">
+          <a href="/" class="logo">
+            <img src="/src/img/logo-footer.png" alt="LAB￦ONS">
+          </a>
+          <p>본 홈페이지는 <b>개인 블로그</b>이며 여기서 취득한 어떤 정보도 법적인 효력을 갖지 못합니다. 모든 투자의 책임은 당사자에게 있습니다. 참고한 정보의 출처는 신뢰할 만하나, 열람 시점이나 제공처의 사정 따라 정보의 정확성이 달라질 수 있습니다.</p>
+        </div>
+
+        <div class="footer-links">
+          <div class="footer-link">
+            <h4>주요 정보 출처</h4>
+            <ul>
+              <li><i class="bi bi-chevron-right"></i> <a href="http://data.krx.co.kr/contents/MDC/MAIN/main/index.cmd">한국거래소</a></li>
+              <li><i class="bi bi-chevron-right"></i> <a href="https://dart.fss.or.kr/">전자공시시스템</a></li>
+              <li><i class="bi bi-chevron-right"></i> <a href="https://finance.naver.com/">네이버증권</a></li>
+              <li><i class="bi bi-chevron-right"></i> <a href="https://comp.fnguide.com/SVO2/ASP/SVD_main.asp?pGB=1&gicode=A005930&cID=&MenuYn=Y&ReportGB=&NewMenuID=11&stkGb=&strResearchYN=">에프앤가이드</a></li>
+              <li><i class="bi bi-chevron-right"></i> <a href="https://news.einfomax.co.kr/">연합인포맥스</a></li>
+            </ul>
+          </div>
+
+          <div class="footer-link">
+            <h4>서비스 바로가기</h4>
+            <ul>{% for _nav in nav %}
+              <li><i class="bi bi-chevron-right"></i><a href="{{ _nav['href'] }}">{{ _nav['content'] }}</a></li>{% endfor %}
+            </ul>
+          </div>
+        </div>
+
+        <div class="footer-contact">
+          <h4>연락처</h4>
+          <p><strong><i class="bi bi-envelope-fill"></i></strong> snob.labwons@gmail.com </p>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <div class="copyright">
+        &copy; Copyright LAB<strong>￦</strong>ONS. All Rights Reserved
+      </div>
+      <div class="credits">Designed By. YUHO PAPA</div>
+    </div>
+  </footer>
+
+  <a href="#" id="scroll-top" class="scroll-top"><i class="bi bi-arrow-up-short"></i></a>
+
+</body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KJFQ72Z8"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+</html>

@@ -1,9 +1,13 @@
+from pylabwons_stub.env import PATH
 from pylabwons_stub.core.build.baseline import Baseline
+from pylabwons_stub.schema.const.baseline import BASELINE
 from pylabwons_stub.schema.const.marketmap import COLORS, MARKETMAP
 from pylabwons_stub.utils import tools
 from pandas import DataFrame
 from pandas.api.types import is_numeric_dtype
-from typing import Callable, Hashable, List
+from jinja2 import Environment, FileSystemLoader
+from json import dumps
+from typing import Callable, Dict, Hashable, List
 import numpy as np
 import pandas as pd
 import plotly.graph_objs as go
@@ -85,7 +89,7 @@ class MarketMap(Baseline):
             objs[f'{key}_c'] = self[key].apply(__paint, args=(meta.scale, COLORS[meta.color], meta.index))
         colors = pd.concat(objs, axis=1)
         colors.iloc[-2:] = "#C8C8C8"
-        super(Baseline, self).__init__(pd.concat([self, colors]))
+        super(Baseline, self).__init__(pd.concat([self, colors], axis=1))
         return
 
     def _stack(self, by:str, exclude_ticker:List=None):
@@ -106,17 +110,20 @@ class MarketMap(Baseline):
             '''
             w = df['size'] / obj.size
             for col in df.columns:
-                if not is_numeric_dtype(df[col]) or col in ['size']:
+                if not col in MARKETMAP.keys():
                     continue
+
                 try:
-                    obj[col] = (w * df[col]).sum()
+                    data = pd.to_numeric(df[col], errors='coerce')
+                    if MARKETMAP[col].method == 'weighted':
+                        obj[col] = (w * data).sum()
+
+                    if MARKETMAP[col].method == 'arithmetic':
+                        obj[col] = data.mean()
+
                 except (ValueError, TypeError) as e:
-                    self.logger(f'Error calculating weighted: {col}({df[col].dtype})@{name} / {e}')
-            '''
-            Exception Grouping Factors:
-            Arithmetic Mean
-            '''
-            # Not Defined Yet
+                    self.logger(f'Error calculating arithmetic: {col}({df[col].dtype})@{name} / {e}')
+
             return obj
 
         objs = []
@@ -141,12 +148,71 @@ class MarketMap(Baseline):
         return
 
     @property
+    def metadata(self) -> Dict:
+        def _rgb2hex(r, g, b):
+            return f'#{hex(int(r))[2:]}{hex(int(g))[2:]}{hex(int(b))[2:]}'
+
+        meta = {}
+        for key, _meta in MARKETMAP.items():
+            meta[key] = {
+                'label': BASELINE[key].kor_name,
+                'unit': BASELINE[key].unit,
+                'scale': _meta.scale,
+                'color': [_rgb2hex(*rgb) for rgb in COLORS[_meta.color]],
+            }
+        return meta
+
+    @property
+    def stat(self):
+        def _rgb2hex(r, g, b):
+            return f'#{hex(int(r))[2:]}{hex(int(g))[2:]}{hex(int(b))[2:]}'
+        objs = {}
+        cols = ["min", "max", "minT", "maxT", "minC", "maxC", "minI", "maxI", "label", "minTicker", "maxTicker"]
+        for key, meta in MARKETMAP.items():
+            if meta.method == 'arithmetic':
+                continue
+            data = self[key]
+            _min = self[self[key] == data.min()]
+            _max = self[self[key] == data.max()]
+            minv = f'{data.min():,.1f}%'
+            maxv = f'{data.max():,.1f}%'
+            objs[key] = [
+                f'{"-" if len(_min) > 1 else minv}',
+                f'{"-" if len(_max) > 1 else maxv}',
+                "(복수 종목)" if len(_min) > 1 else _min.iloc[0]['name'],
+                "(복수 종목)" if len(_max) > 1 else _max.iloc[0]['name'],
+                _rgb2hex(*COLORS[meta.color][0]),
+                _rgb2hex(*COLORS[meta.color][-1]),
+                meta.iconMin,
+                meta.iconMax,
+                BASELINE[key].kor_name,
+                None if len(_min) > 1 else _min.index[0],
+                None if len(_max) > 1 else _max.index[0],
+            ]
+        return DataFrame(data=objs, index=cols)
+
+    @property
     def with_005930(self):
         return self[~self.index.str.startswith('N')]
 
     @property
     def without_005930(self):
         return self[~self.index.str.startswith('W')]
+
+    def deploy(self):
+        with open(file=PATH.HTML.MARKETMAP, mode='w', encoding='utf-8') as file:
+            file.write(
+                Environment(loader=FileSystemLoader(PATH.HTML.TEMPLATE)) \
+                .get_template('marketmap-1.0.0.html') \
+                .render({
+                    "title": "LAB￦ONS: \uc2dc\uc7a5\uc9c0\ub3c4",
+                    "tradingDate": f'{self.td.closed}\u0020\uc885\uac00\u0020\uae30\uc900',
+                    "statusValue": self.stat.to_dict(),
+                    "srcTicker": self.to_json(orient='index'),
+                    "srcIndicatorOpt": dumps(self.metadata),
+                })
+            )
+        return
 
     def test_plot(
         self,
@@ -157,7 +223,6 @@ class MarketMap(Baseline):
             base = self[~self.index.str.startswith('W')]
         else:
             base = self[~self.index.str.startswith('N')]
-        base = base[['name', 'ceil', 'size', 'meta', col]]
 
         fig = go.Figure()
         fig.add_trace(go.Treemap(
@@ -175,7 +240,7 @@ class MarketMap(Baseline):
                 'visible': False,
             },
             marker={
-                'color':base[f'{col}_c']
+                'colors':base[f'{col}_c']
             },
             meta=base['meta'] + '<br>' + base[col].astype(str) + '%',
             hovertemplate='%{meta}<extra></extra>',
@@ -186,6 +251,11 @@ class MarketMap(Baseline):
 
 if __name__ == "__main__":
     mmap = MarketMap()
-    data = mmap.with_005930
+    # print(mmap)
+    # print(mmap.metadata)
+
+    # data = mmap.with_005930
     # print(data)
-    mmap.test_plot()
+
+    # mmap.test_plot()
+    mmap.deploy()

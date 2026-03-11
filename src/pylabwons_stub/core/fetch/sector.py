@@ -19,7 +19,7 @@ class Sector(DataFrameHeir):
     def fetch(self):
         tic = time.perf_counter()
         try:
-            self.logger(f'FETCH WICS ON {self.server_date}')
+            self.logger(f'FETCH MARKET SECTORS ON {self.server_date}')
 
             objs = []
             for n, (code, name) in enumerate(SCHEMA.CODES.items(), start=1):

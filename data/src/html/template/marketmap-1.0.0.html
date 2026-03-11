@@ -1,0 +1,407 @@
+{% extends "layout-1.0.0.html" %}
+{% set NOTICE = "모든 투자의 책임은 당사자에게 있습니다. 
+본 자료는 법적 효력이 없으며 열람 시점에 따라 정보가 상이할 수 있습니다.                 
+*표시는 코스닥 종목입니다. 코스피200, 코스닥150 종목으로 구성되었습니다." %}
+{% set faq = [
+    {'q': '실시간 업데이트는 안 되나요?', 
+     'a': '실시간 업데이트는 제공되지 않습니다.<i class="bi bi-emoji-frown-fill"></i> 마지막 거래일 기준 데이터로 구성하였습니다.'},
+    {'q': '제가 찾는 종목이 없어요.', 
+     'a': '가독성을 위해 코스피200 지수와 코스닥150 지수 종목으로 구성하였으며 이외 종목은 제외됩니다.'},
+    {'q': '언제 업데이트 되나요?', 
+     'a': '정규장 시간 마감(15:30) 이후 15분~30분 내로 업데이트 됩니다. 휴장일에는 마지막 개장일 데이터가 유지됩니다.'},
+    {'q': '자료 출처가 어디인가요?',
+     'a': '섹터/업종 분류는 GICS 산업 분류 및 WISE INDEX를 참고하여 재구성하였습니다. 수익률은 한국거래소(KRX) 데이터를 참고하였으며 기타 지표는 네이버 및 에프앤가이드를 참고하였습니다.'},
+    {'q': 'NXT 거래소 정보는 반영 안 되나요?',
+     'a': 'NXT 거래소의 가격 정보는 반영되지 않으며 한국거래소(KRX) 기준 가격만 반영됩니다.'},
+    {'q': '정보 수정이 필요해요.',
+     'a': '고장 신고, 정보 정정 및 기타 문의는 snob.labwons@gmail.com 으로 연락주세요!<i class="bi bi-emoji-smile-fill"></i>'},
+] %}
+
+{% block meta %}
+  <meta name="description" content="코스피200과 코스닥150 종목을 섹터/업종 별 시가총액과 투자지표를 각각 크기와 색깔로 표시하였습니다. 시장을 직관적으로 이해할 수 있습니다.">
+  <meta property="og:title" content="LAB￦ONS: 시장 지도">
+  <meta property="og:image" content="/src/img/thumbnail-marketmap_1200x630.jpg">
+  <meta property="og:description" content="코스피200과 코스닥150 종목을 섹터/업종 별 시가총액과 투자지표를 각각 크기와 색깔로 표시하였습니다. 시장을 직관적으로 이해할 수 있습니다.">
+  <meta property="og:type" content="website">
+{% endblock %}
+
+{% block dependencies %}
+  <script src="/src/js/jquery-3.6.1.min.js"></script>
+  <script src="/src/js/swiper-bundle.min.js" defer></script>
+  <script src="/src/js/select2.min.js"></script>
+  <script src="/src/js/plotly-2.35.2-r0.1.min.js"></script>
+{% endblock %}
+
+{% block style %}
+  <style>
+    .service-nav {
+      flex: 0 0 auto;
+      margin-bottom: 6px;
+      padding: 0;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .service-nav .service-config {
+      flex: 0 0 auto;
+      max-width: 40%;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      gap: 4px;
+    }
+
+    .service-nav .service-config .map-select {
+      font-family: var(--font-family);
+      font-size: 14px;
+      color: #999;
+      min-width: 180px;
+      height: 28px;
+      margin: 0;      
+      padding: 2px 8px;
+      border: 1px solid #aaa;
+      border-radius: 4px;
+      box-sizing: border-box;
+      cursor: pointer;
+    }
+
+    .service-nav .service-config .map-button {
+      width: 28px;
+      height: 28px;
+      margin: 0;
+      padding: 4px;
+      border: 1px solid #aaa;
+      border-radius: 4px;
+      box-sizing: border-box;
+      cursor: pointer;
+      background-color: #fff; 
+      color: var(--nav-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .service-nav .service-config .map-button:hover {
+      background-color: var(--nav-color);
+      color: #fff;
+      transition: 0.3s;
+    }
+
+    .service-nav .service-search {
+      flex: 0 0 auto;
+      width: 40%;
+      display: flex;
+      flex-direction: row-reverse;
+      align-items: center;
+    }
+
+    .service-nav .service-search .map-searchbar {
+      flex: 1 0 auto;
+      min-width: 360px;
+      font-family: var(--font-family);
+      font-size: 14px;
+      color: #999;      
+      height: 28px;
+      margin: 0;      
+      padding: 2px 8px;
+      border: 1px solid #aaa;
+      border-radius: 4px;
+      box-sizing: border-box;
+      cursor: pointer;
+    }
+
+    @media (max-width: 1023px){
+      .service-nav .map-select {
+        min-width: auto;
+      }
+    }
+
+    @media (max-width: 767px){
+      .service-nav {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 4px;
+      }
+
+      .service-nav .service-config {
+        flex: 0 0 auto;
+        max-width: none;
+      }
+      
+      .service-nav .service-search {
+        flex: 0 0 auto;
+        width: 100%;
+        min-width: auto;
+        max-width: 100%;
+        overflow: hidden;
+      }
+
+      .service-nav .service-config .map-select,
+      .service-nav .service-search .map-searchbar {
+        flex: 1 0 auto;
+        min-width: auto;
+      }      
+    }
+
+    @media (max-width: 424px) {
+      .service-nav .map-select.types,
+      .service-nav .map-select.options {
+        max-width: calc((100% - 72px) / 2);
+      }
+    }
+
+    .select2-container .select2-selection--single {
+      font-size: 14px !important;
+    }
+
+    .select2-container--default .select2-results__option {
+      font-size: 14px !important;
+    }
+
+    .service-app {
+      flex: 1 0 auto;
+      height: 75vh;
+      display: flex;
+      align-items: stretch;
+      position: relative;
+    }
+
+    .service-app .plot {
+      flex: 1 0 auto;
+    }
+
+    .service-app .rewind {
+      display: none;
+    }
+
+    .service-app .label {
+      position: absolute;
+      bottom: 2px;
+      right: 0;
+      font-size: 14px;
+      font-weight: 700;
+      color: gray;
+    }
+
+    .service-footer {
+      flex: 0 1 auto;
+      width: 100%;
+      display: flex;
+      flex-direction: row;
+      align-items: stretch;
+      justify-content: flex-start;
+      gap: 8px;
+    }
+
+    .service-footer .legends {
+      flex: 0 0 auto;
+      width: 40%;
+      display: flex;
+      flex-direction: row;
+      align-items: stretch;
+      justify-content: space-between;
+    }
+
+    .service-footer .legends .legend {
+      flex: 1 0 auto;
+      /* min-width: 80px; */
+      box-sizing: border-box;
+      display: flex;
+      flex-wrap: nowrap;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-family);
+      font-weight: 700;
+      font-size: 13px;
+      color: #fff;
+    }
+
+    .service-footer .notice {
+      font-family: var(--font-family);
+      font-size: 12px;
+      color: var(--default-color);
+    }
+
+    @media (max-width: 1023px){
+      .service-footer .notice {
+        font-size: 9px;
+      }
+    }
+
+    @media (max-width: 767px){
+      .service-footer {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .service-footer .legends,
+      .service-footer .notice {
+        width: 100%;
+      }
+
+      .service-footer .legends .legend {
+        min-width: auto;
+        font-size: 12px;
+      }
+    }
+
+    .swiper {
+      --swiper-navigation-size: 26px !important;
+      --swiper-navigation-color: var(--nav-color) !important;
+    }
+
+    .swiper-slide {
+      opacity: 0.3;
+      /* transition: 0.3s; */
+    }
+
+    @media (max-width:1439px){
+      .swiper-slide {
+        opacity: 1.0;
+      }
+    }
+
+    .swiper-slide.centered {
+      opacity: 1.0;
+      /* transition: 0.3s; */
+    }
+
+    .service-status-content {
+      background-color: #fff;
+      box-shadow: 0px 0 20px rgba(0, 0, 0, 0.1);
+      box-sizing: content-box;
+      padding: 30px;
+      margin: 40px 30px;
+      /* min-height: 320px; */
+      display: flex;
+      flex-direction: column;
+      text-align: center;
+      transition: 0.3s;
+    }
+
+    .service-status-values {
+      display: flex; 
+      align-items: stretch;
+      justify-content: space-around;
+    }
+
+    .service-status-values .service-status-value {
+      flex: 0 0 auto; 
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+    }
+    .service-status-values .service-status-value > i {
+      font-size: 24px;
+    }
+    .service-status-values .service-status-value > p {
+      font-size: 24px;
+      font-weight: 700;
+      margin: 10px 0;
+    }
+    .service-status-values .service-status-value > span {
+      font-family: var(--font-family);
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--default-color);
+    }
+    @media (max-width:767px) {
+      .service-status-values .service-status-value > p {
+        font-size: 22px;
+      }
+      .service-status-values .service-status-value > span {
+        font-size: 14px;
+      }
+    }
+
+
+  </style>
+{% endblock %}
+
+{% block data %}
+  <script type="text/javascript">
+    const SERVICE = "marketmap";
+    const srcIndicatorOpt = {{ srcIndicatorOpt }};
+    const srcTicker = {{ srcTicker }};
+  </script>
+{% endblock %}
+
+{% block content %}
+          <!-- MARKET MAP -->
+          <div class="service-nav">
+            <div class="service-config">
+              <select name="type" class="map-select types"></select>
+              <select name="option" class="map-select options"></select>
+              <span class="map-button map-reset"><i class="bi bi-arrow-clockwise"></i></span>
+              <span class="map-button map-switch"><i class="bi bi-geo-alt-fill"></i></span>
+            </div>
+            <div class="service-search">
+              <select class="map-select map-searchbar"></select>
+            </div>
+          </div>
+  
+          <div class="service-app">
+            <i class="bi bi-rewind-circle-fill rewind"></i>
+            <div class="plot" id="plotly"></div>
+            <span class="label">{{ tradingDate }}</span>
+          </div>
+  
+          <div class="service-footer">
+            <div class="legends">
+              <span class="legend"></span>
+              <span class="legend"></span>
+              <span class="legend"></span>
+              <span class="legend"></span>
+              <span class="legend"></span>
+              <span class="legend"></span>
+              <span class="legend"></span>
+            </div>
+            <div class="notice">{{ NOTICE }}</div>
+          </div>
+          <!-- END MARKET MAP -->
+{% endblock %}
+
+{% block content_addon %}
+    <section class="section section-flow">
+      <div class="container container-title">
+        <h2 class="main-title" title="KOSPI200 / KOSDAQ150 종목으로 구성되었습니다.">STATUS</h2>
+        <p class="sub-title">{{ tradingDate }}</p>
+      </div>
+
+      <div class="container container-content">
+
+        <div class="swiper">
+          <div class="swiper-wrapper">
+            {% for key, value in statusValue.items() %}
+            <div class="swiper-slide">
+              <div class="service-status-content">
+                <h3>{{ value['label'] }}</h3>
+                <div class="service-status-values">
+                  <div class="service-status-value" data-ticker="{{ value['maxTicker'] }}">
+                    <i class="bi {{ value['maxI'] }}" style="color:{{ value['maxC'] }};"></i>
+                    <p style="color:{{ value['maxC'] }};">{{ value['max'] }}</p>
+                    <span>{{ value['maxT'] }}</span>                    
+                  </div>
+
+                  <div class="service-status-value" data-ticker="{{ value['minTicker'] }}">
+                    <i class="bi {{ value['minI'] }}" style="color:{{ value['minC'] }};"></i>
+                    <p style="color:{{ value['minC'] }};">{{ value['min'] }}</p>
+                    <span>{{ value['minT'] }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          <div class="swiper-button-prev"></div>
+          <div class="swiper-button-next"></div>
+        </div>
+
+      </div>
+
+    </section>
+{% endblock %}

@@ -43,12 +43,19 @@ class PATH:
         SECTOR = DATA / "src/sector.parquet",
         NUMBER = DATA / "src/number.parquet",
     )
+    LOG = DATA / "src/log"
     CSV = DataDictionary(
         BASELINE = DATA / "src/baseline.csv"
     )
     JSON = DataDictionary(
         BUILD = DATA / "log/build.json"
     )
+    HTML = DataDictionary(
+        MARKETMAP = DATA / "src/html/marketmap.html",
+        TEMPLATE = DATA / "src/html/template",
+    )
+
+
     if HOST == 'local':
         DOWNLOADS = Path(os.getenv('USERPROFILE')) / 'Downloads'
     else:

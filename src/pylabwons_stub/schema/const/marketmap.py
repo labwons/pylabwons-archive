@@ -43,6 +43,7 @@ COLORS = DataDict(
 MARKETMAP = DataDict(
 
     returnOn1Day=DataDict(
+        method='weighted',
         scale=[-3, -2, -1, 0, 1, 2, 3],
         color='BLUE2RED',
         index=3,
@@ -51,6 +52,7 @@ MARKETMAP = DataDict(
         # map-attribute
     ),
     returnOn1Week=DataDict(
+        method='weighted',
         scale=[-6, -4, -2, 0, 2, 4, 6],
         color='BLUE2RED',
         index=3,
@@ -59,6 +61,7 @@ MARKETMAP = DataDict(
         # map-attribute
     ),
     returnOn1Month=DataDict(
+        method='weighted',
         scale=[-10, -6.7, -3.3, 0, 3.3, 6.7, 10],
         color='BLUE2RED',
         index=3,
@@ -67,6 +70,7 @@ MARKETMAP = DataDict(
         # map-attribute
     ),
     returnOn3Months=DataDict(
+        method='weighted',
         scale=[-18, -12, -6, 0, 6, 12, 18],
         color='BLUE2RED',
         index=3,
@@ -75,6 +79,7 @@ MARKETMAP = DataDict(
         # map-attribute
     ),
     returnOn6Months=DataDict(
+        method='weighted',
         scale=[-24, -16, -8, 0, 8, 16, 24],
         color='BLUE2RED',
         index=3,
@@ -83,6 +88,7 @@ MARKETMAP = DataDict(
         # map-attribute
     ),
     returnOn1Year=DataDict(
+        method='weighted',
         scale=[-30, -20, -10, 0, 10, 20, 30],
         color='BLUE2RED',
         index=3,
@@ -91,6 +97,7 @@ MARKETMAP = DataDict(
         # map-attribute
     ),
     fiftyTwoWeekHighPct=DataDict(
+        method='weighted',
         scale=[-45, -30, -15, 0, 0, 0, 0],
         color='BLUE2RED',
         index=3,
@@ -99,6 +106,7 @@ MARKETMAP = DataDict(
         # map-attribute
     ),
     fiftyTwoWeekLowPct=DataDict(
+        method='weighted',
         scale=[0, 0, 0, 0, 15, 30, 45],
         color='BLUE2RED',
         index=3,
@@ -107,6 +115,7 @@ MARKETMAP = DataDict(
         # map-attribute
     ),
     targetPricePct=DataDict(
+        method='weighted',
         scale=[-20, -10, -5, 0, 5, 10, 20],
         color='GREEN2RED',
         index=3,
@@ -116,6 +125,7 @@ MARKETMAP = DataDict(
     ),
 
     foreignRate=DataDict(
+        method='arithmetic',
         scale=[0, 0, 0, 0, 20, 40, 60],
         color='RED2GREEN',
         index=3,
@@ -124,6 +134,7 @@ MARKETMAP = DataDict(
         # map-attribute
     ),
     beta=DataDict(
+        method='arithmetic',
         scale=[0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2],
         color='RED2GREEN',
         index=3,
@@ -132,6 +143,7 @@ MARKETMAP = DataDict(
         # map-attribute
     ),
     yoyRevenue=DataDict(
+        method='arithmetic',
         scale=[-30, -20, -10, 0, 10, 20, 30],
         color='RED2GREEN',
         index=3,
@@ -140,6 +152,7 @@ MARKETMAP = DataDict(
         # map-attribute
     ),
     yoyProfit=DataDict(
+        method='arithmetic',
         scale=[-120, -80, -40, 0, 40, 80, 120],
         color='RED2GREEN',
         index=3,
@@ -148,6 +161,7 @@ MARKETMAP = DataDict(
         # map-attribute
     ),
     yoyEps=DataDict(
+        method='arithmetic',
         scale=[-90, -60, -30, 0, 30, 60, 90],
         color='RED2GREEN',
         index=3,
@@ -156,6 +170,7 @@ MARKETMAP = DataDict(
         # map-attribute
     ),
     trailingPs=DataDict(
+        method='arithmetic',
         scale=[0.5, 2, 3.5, 5, 6.5, 8, 9.5],
         color='GREEN2RED',
         index=3,
@@ -164,6 +179,7 @@ MARKETMAP = DataDict(
         # map-attribute
     ),
     trailingPe=DataDict(
+        method='arithmetic',
         scale=[5, 10, 20, 30, 40, 50, 60],
         color='GREEN2RED',
         index=3,
@@ -172,6 +188,7 @@ MARKETMAP = DataDict(
         # map-attribute
     ),
     trailingProfitRate=DataDict(
+        method='arithmetic',
         scale=[-15, -10, -5, 0, 5, 10, 15],
         color='RED2GREEN',
         index=3,
@@ -180,6 +197,7 @@ MARKETMAP = DataDict(
         # map-attribute
     ),
     estimatedRevenueGrowth=DataDict(
+        method='arithmetic',
         scale=[-10, -5, 0, 5, 10, 15, 20],
         color='RED2GREEN',
         index=3,
@@ -188,6 +206,7 @@ MARKETMAP = DataDict(
         # map-attribute
     ),
     estimatedProfitRate=DataDict(
+        method='arithmetic',
         scale=[-15, -10, -5, 0, 5, 10, 15],
         color='RED2GREEN',
         index=3,
@@ -196,6 +215,7 @@ MARKETMAP = DataDict(
         # map-attribute
     ),
     estimatedProfitGrowth=DataDict(
+        method='arithmetic',
         scale=[-50, -25, 0, 25, 50, 75, 100],
         color='RED2GREEN',
         index=3,
@@ -204,6 +224,7 @@ MARKETMAP = DataDict(
         # map-attribute
     ),
     estimatedEpsGrowth=DataDict(
+        method='arithmetic',
         scale=[-50, -25, 0, 25, 50, 75, 100],
         color='RED2GREEN',
         index=3,
@@ -212,6 +233,7 @@ MARKETMAP = DataDict(
         # map-attribute
     ),
     estimatedPe=DataDict(
+        method='arithmetic',
         scale=[5, 10, 20, 30, 40, 50, 60],
         color='GREEN2RED',
         index=3,
