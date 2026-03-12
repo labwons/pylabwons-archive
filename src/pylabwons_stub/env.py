@@ -56,10 +56,10 @@ class PATH:
     )
 
 
-    if HOST == 'local':
+    if HOST in ['hkefico', 'local']:
         DOWNLOADS = Path(os.getenv('USERPROFILE')) / 'Downloads'
     else:
-        DOWNLOADS = os.getcwd()
+        DOWNLOADS = Path(os.getcwd())
 
 
 if __name__ == "__main__":

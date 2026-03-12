@@ -100,7 +100,7 @@ class MarketMap(Baseline):
             obj.size = df['size'].sum()
             obj.ceil = '대형주' if by.startswith('sector') else df.iloc[0]['sectorName']
             obj.meta = f'{_name}<br>시가총액: {tools.int2krw(obj.size * 1e+8)}원'
-            if exclude_ticker:
+            if by.startswith('sector') and exclude_ticker:
                 obj.ceil += f'({self.loc[exclude_ticker[0], "name"]} 제외)'
 
             '''
@@ -251,13 +251,14 @@ class MarketMap(Baseline):
 
 if __name__ == "__main__":
     mmap = MarketMap()
-    # print(mmap)
+    print(mmap)
     # print(mmap.metadata)
     # print(mmap.columns.tolist())
 
     # data = mmap.with_005930
+    # data = mmap.without_005930
     # print(data)
 
     # mmap.test_plot()
-    mmap.deploy()
-    print(mmap[mmap['name'] == '증권'].iloc[0])
+    # mmap.deploy()
+

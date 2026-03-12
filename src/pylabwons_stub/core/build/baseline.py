@@ -48,43 +48,39 @@ class Baseline(DataFrameHeir):
         for col in self.columns:
             if BASELINE[col].data_type == str:
                 continue
+
             if col in ['sharesOutstanding', 'sharesPreferred', 'sharesFloating']:
                 self[col] = self[col].astype(str).str.replace('nan', '0').fillna('0')
-            if col == 'ipo' or 'date' in col.lower():
-                self[col] = self._typecast(self[col], datetime)
-            else:
-                self[col] = self._typecast(self[col])
+            if col == 'ipo':
+                self[col] = self[col].astype(str).str.replace('-', '')
+
+            self[col] = self._typecast(self[col])
+            if BASELINE[col].data_type == self[col].dtype == float:
+                self[col] = round(self[col], BASELINE[col].round)
 
         self['fiftyTwoWeekHigh'] = np.fmax(self['close'], self['fiftyTwoWeekHigh'].fillna(self['close']))
         self['fiftyTwoWeekLow'] = np.fmin(self['close'], self['fiftyTwoWeekLow'].fillna(self['close']))
         self['fiftyTwoWeekHighPct'] = round(100 * (self['close'] / self['fiftyTwoWeekHigh'] - 1), 2)
         self['fiftyTwoWeekLowPct'] = round(100 * (self['close'] / self['fiftyTwoWeekLow'] - 1), 2)
         self['targetPricePct'] = round(100 * (self['close'] / self['targetPrice'] - 1), 2)
-        self['estimatedPe'] = self['close'] / self['estimatedEps']
-        self['forwardPe'] = self['close'] / self['forwardEps']
-        self['trailingPe'] = self['close'] / self['trailingEps']
-        self['trailingPs'] = (self['marketCap'] / 1e+8) / self['trailingRevenue']
+        self['estimatedPe'] = round(self['close'] / self['estimatedEps'], 2)
+        self['forwardPe'] = round(self['close'] / self['forwardEps'], 2)
+        self['trailingPe'] = round(self['close'] / self['trailingEps'], 2)
+        self['trailingPs'] = round((self['marketCap'] / 1e+8) / self['trailingRevenue'], 2)
         self.sort_values(by='marketCap', ascending=False, inplace=True)
 
         super().__init__(self[BASELINE.keys()])
         return
 
-    def _typecast(self, series: pd.Series, dtype: Any = 'numeric') -> pd.Series:
-        if dtype == datetime:
+    def _typecast(self, series: pd.Series) -> pd.Series:
+        try:
+            return series.astype(int)
+        except (TypeError, ValueError):
             try:
-                return pd.to_datetime(series)
-            except (TypeError, ValueError) as _e:
-                self.logger(f'>>> Unable to cast {series.name}: {series.dtype} -> {dtype}: {_e}')
+                return series.astype(float)
+            except (TypeError, ValueError) as e:
+                self.logger(f'>>> Unable to cast <{series.name}: {series.dtype} -> numeric>, {e}')
                 return series.astype(str)
-        error = ''
-        for _dtype in [int, float]:
-            try:
-                return series.astype(_dtype)
-            except (TypeError, ValueError) as _e:
-                error = _e
-                continue
-        self.logger(f'>>> Unable to cast <{series.name}: {series.dtype} -> numeric>, {error}')
-        return series.astype(str)
 
     def get_tickets(self, *tickets) -> List[str]:
         if tickets:
@@ -193,5 +189,8 @@ if __name__ == "__main__":
     baseline = Baseline()
     # print(baseline)
     # print(baseline.columns)
-    baseline.build()
+    baseline.build('baseline')
     # baseline.to_excel(PATH.DOWNLOADS / 'baseline.xlsx')
+    # baseline.market.to_excel(PATH.DOWNLOADS / 'market.xlsx')
+    # baseline.number.to_excel(PATH.DOWNLOADS / 'number.xlsx')
+    # baseline.sector.to_excel(PATH.DOWNLOADS / 'sector.xlsx')
