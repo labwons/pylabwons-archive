@@ -66,7 +66,6 @@ jobs:
 
     - name: Commit and Push changes
       run : |
-        cd ..
         git add . -- :!repo/
         
         TIMESTAMP=$(TZ='Asia/Seoul' date +'%Y-%m-%d %H:%M:%S')
