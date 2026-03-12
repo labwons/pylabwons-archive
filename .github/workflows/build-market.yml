@@ -45,19 +45,15 @@ jobs:
       run: |
         python run/build_action.py
 
-    - name: Deploy to LABWONS
-      run: |
-        cp data/src/html/marketmap.html repo/docs/index.html
-
     - name: Set Git Config
       run: |
         git config --global user.name 'labwons.manager'
         git config --global user.email 'snob.labwons@gmail.com'
 
-    - name: Commit and Push changes
-      # env:
-      #   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Deploy to LABWONS
       run : |
+        cp data/src/html/marketmap.html repo/docs/index.html
+        cd repo
         git add .
         
         TIMESTAMP=$(TZ='Asia/Seoul' date +'%Y-%m-%d %H:%M:%S')
@@ -68,15 +64,17 @@ jobs:
           git push
         fi
 
-    - name: Commit and Push changes to LABWONS
+    - name: Commit and Push changes
       run : |
-        cd labwons-repo
-        git add .
+        cd ..
+        git add . -- :!repo/
         
-        TIMESTAMP=$(date)
+        TIMESTAMP=$(TZ='Asia/Seoul' date +'%Y-%m-%d %H:%M:%S')
         if git diff --cached --quiet; then
           echo "No changes to commit."
         else
-          git commit -m "GITHUB ACTION BUILD on $TIMESTAMP"
+          git commit -m "[labwons.machine] on $TIMESTAMP"
           git push
         fi
+
+    
