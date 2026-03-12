@@ -4,8 +4,7 @@ from pylabwons_stub.core.fetch.market import Market
 from pylabwons_stub.core.fetch.number import Number
 from pylabwons_stub.core.fetch.sector import Sector
 from pylabwons_stub.env import HOST, PATH, RUNTIME
-from datetime import datetime
-from typing import Any, Callable, List
+from typing import Callable, List
 import numpy as np
 import pandas as pd
 import pylabwons as lw
@@ -155,7 +154,7 @@ class Baseline(DataFrameHeir):
             except (ConnectionError, IndexError, KeyError, Exception) as e:
                 self.logger(f'>>> FAILED TO BUILD NUMBERS: {e}')
 
-        if tickets:
+        if tickets or (HOST == 'github_action' and RUNTIME == 'workflow_dispatch'):
             self._capture_baseline(self.sector, self.market, self.number)
             self.to_parquet(PATH.PARQUET.BASELINE, engine='pyarrow')
             self.to_parquet(PATH.LOG / f'baseline-{self.td.closed}.parquet', engine='pyarrow')
