@@ -43,7 +43,22 @@ class Baseline(DataFrameHeir):
         self.logger(f'CAPTURE NEW BASELINE ON {self.td.closed}')
         super().__init__(*args, method='join')
 
-        # Data Cleansing and Type casting
+        self._typecast()
+        self['fiftyTwoWeekHigh'] = np.fmax(self['close'], self['fiftyTwoWeekHigh'].fillna(self['close']))
+        self['fiftyTwoWeekLow'] = np.fmin(self['close'], self['fiftyTwoWeekLow'].fillna(self['close']))
+        self['fiftyTwoWeekHighPct'] = round(100 * (self['close'] / self['fiftyTwoWeekHigh'] - 1), 2)
+        self['fiftyTwoWeekLowPct'] = round(100 * (self['close'] / self['fiftyTwoWeekLow'] - 1), 2)
+        self['targetPricePct'] = round(100 * (self['close'] / self['targetPrice'] - 1), 2)
+        self['estimatedPe'] = round(self['close'] / self['estimatedEps'], 2)
+        self['forwardPe'] = round(self['close'] / self['forwardEps'], 2)
+        self['trailingPe'] = round(self['close'] / self['trailingEps'], 2)
+        self['trailingPs'] = round((self['marketCap'] / 1e+8) / self['trailingRevenue'], 2)
+        self.sort_values(by='marketCap', ascending=False, inplace=True)
+
+        super().__init__(self[BASELINE.keys()])
+        return
+
+    def _typecast(self):
         for col in self.columns:
             meta = BASELINE[col]
             if meta.data_type == str:
@@ -63,19 +78,6 @@ class Baseline(DataFrameHeir):
 
             if meta.data_type == self[col].dtype == float:
                 self[col] = round(self[col], BASELINE[col].round)
-
-        self['fiftyTwoWeekHigh'] = np.fmax(self['close'], self['fiftyTwoWeekHigh'].fillna(self['close']))
-        self['fiftyTwoWeekLow'] = np.fmin(self['close'], self['fiftyTwoWeekLow'].fillna(self['close']))
-        self['fiftyTwoWeekHighPct'] = round(100 * (self['close'] / self['fiftyTwoWeekHigh'] - 1), 2)
-        self['fiftyTwoWeekLowPct'] = round(100 * (self['close'] / self['fiftyTwoWeekLow'] - 1), 2)
-        self['targetPricePct'] = round(100 * (self['close'] / self['targetPrice'] - 1), 2)
-        self['estimatedPe'] = round(self['close'] / self['estimatedEps'], 2)
-        self['forwardPe'] = round(self['close'] / self['forwardEps'], 2)
-        self['trailingPe'] = round(self['close'] / self['trailingEps'], 2)
-        self['trailingPs'] = round((self['marketCap'] / 1e+8) / self['trailingRevenue'], 2)
-        self.sort_values(by='marketCap', ascending=False, inplace=True)
-
-        super().__init__(self[BASELINE.keys()])
         return
 
     def get_tickets(self, *tickets) -> List[str]:
@@ -140,15 +142,6 @@ class Baseline(DataFrameHeir):
             base = self.market[self.market['marketCap'] >= self.market['marketCap'].median()]
             try:
                 self.number.fetch(*base.index)
-                for col in self.number.columns:
-                    if col in ['sharesOutstanding', 'sharesPreferred', 'sharesFloating']:
-                        self.number[col] = self.number[col].astype(float).fillna(0).astype(int)
-
-                    if BASELINE[col].data_type == str:
-                        self.number[col] = self.number[col].astype(str)
-                        continue
-
-                    self.number[col] = self._typecast(self.number[col])
                 self.number.to_parquet(PATH.PARQUET.NUMBER, engine='pyarrow')
                 self.log.number.date = str(self.number.date)
             except (ConnectionError, IndexError, KeyError, Exception) as e:
