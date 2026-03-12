@@ -182,7 +182,7 @@ MARKETMAP = DataDict(
         method='arithmetic',
         scale=[5, 10, 20, 30, 40, 50, 60],
         color='GREEN2RED',
-        index=3,
+        index=6,
         iconMax='bi-arrow-up-square',
         iconMin='bi-arrow-down-square',
         # map-attribute
@@ -236,7 +236,7 @@ MARKETMAP = DataDict(
         method='arithmetic',
         scale=[5, 10, 20, 30, 40, 50, 60],
         color='GREEN2RED',
-        index=3,
+        index=6,
         iconMax='bi-arrow-up-square',
         iconMin='bi-arrow-down-square',
         # map-attribute
