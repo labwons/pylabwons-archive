@@ -38,17 +38,18 @@ jobs:
         python -m pip install --upgrade pip
         pip install -e .
 
+    - name: Set Git Config
+      run: |
+        git config --global user.name 'labwons.manager'
+        git config --global user.email 'snob.labwons@gmail.com'
+        echo "TIMESTAMP=$(TZ='Asia/Seoul' date +'%Y-%m-%d %H:%M:%S')" >> $GITHUB_ENV
+
     - name: Build
       env:
         KRX_ID: ${{ secrets.KRX_ID }}
         KRX_PW: ${{ secrets.KRX_PW }}
       run: |
-        python run/build_action.py
-
-    - name: Set Git Config
-      run: |
-        git config --global user.name 'labwons.manager'
-        git config --global user.email 'snob.labwons@gmail.com'
+        python run/build_action.py    
 
     - name: Deploy to LABWONS
       run : |
@@ -56,7 +57,6 @@ jobs:
         cd repo
         git add .
         
-        TIMESTAMP=$(TZ='Asia/Seoul' date +'%Y-%m-%d %H:%M:%S')
         if git diff --cached --quiet; then
           echo "No changes to commit."
         else
@@ -68,7 +68,6 @@ jobs:
       run : |
         git add . -- :!repo/
         
-        TIMESTAMP=$(TZ='Asia/Seoul' date +'%Y-%m-%d %H:%M:%S')
         if git diff --cached --quiet; then
           echo "No changes to commit."
         else

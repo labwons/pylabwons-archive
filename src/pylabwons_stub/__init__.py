@@ -6,7 +6,8 @@ __all__ = [
     "Sector",
     "HOST",
     "PATH",
+    "RUNTIME"
 ]
 
 from .core import Baseline, Market, MarketMap, Number, Sector
-from .env import HOST, PATH
+from .env import HOST, PATH, RUNTIME

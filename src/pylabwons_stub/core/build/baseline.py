@@ -121,7 +121,6 @@ class Baseline(DataFrameHeir):
     def build(self, *tickets):
         tickets = self.get_tickets(*tickets)
         self.logger(f'[BUILD BASELINE]')
-        self.logger(f'| RUNS ON "{HOST.upper()} / {RUNTIME.upper()}"')
         self.logger(f'| TRADING DATE: {self.td.closed}')
         self.logger(f'| TICKETS: {"NO TICKETS" if not tickets else tickets}')
 
