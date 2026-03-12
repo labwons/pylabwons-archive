@@ -2,8 +2,8 @@
     "baseline": {
         "date": "20260312",
         "log": [
-            "baseline-20260310.parquet",
             "baseline-20260311.parquet",
+            "baseline-20260310.parquet",
             "baseline-20260312.parquet"
         ]
     },
