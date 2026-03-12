@@ -8,7 +8,7 @@ if __name__ == "__main__":
         lw.login_krx(os.environ['KRX_ID'], os.environ['KRX_PW'])
 
     logger = lw.Logger(console=True)
-    logger(f'RUNS ON "{lws.HOST}" / "{lws.RUNTIME}" @{os.environ.get("TIMESTAMP", "*")}')
+    logger(f'RUNS ON {lws.HOST.upper()} / {lws.RUNTIME.upper()} @{os.environ.get("TIMESTAMP", "*")}')
     baseline = lws.Baseline(logger=logger)
     baseline.number.progress_bar = False
     baseline.build()

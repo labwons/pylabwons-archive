@@ -62,7 +62,6 @@ class DataFrameHeir(DataFrame):
             _df = _df[list(set(_df.columns) - set(base.columns))]
             objs.append(_df)
             base = base.join(_df, how='left')
-
         method = kwargs.get('method', 'concat')
         if method == 'concat':
             return pd.concat(

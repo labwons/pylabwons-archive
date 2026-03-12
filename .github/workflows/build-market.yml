@@ -40,7 +40,7 @@ jobs:
 
     - name: Set Git Config
       run: |
-        git config --global user.name 'labwons.manager'
+        git config --global user.name 'labwons.machine'
         git config --global user.email 'snob.labwons@gmail.com'
         echo "TIMESTAMP=$(TZ='Asia/Seoul' date +'%Y-%m-%d %H:%M:%S')" >> $GITHUB_ENV
 
@@ -51,14 +51,14 @@ jobs:
       run: |
         python run/build_action.py    
 
-    - name: Deploy to LABWONS
+    - name: Deploy
       run : |
         cp data/src/html/marketmap.html repo/docs/index.html
         cd repo
         git add .
         
         if git diff --cached --quiet; then
-          echo "No changes to commit."
+          echo "NO CHANGES TO DEPLOY."
         else
           git commit -m "[labwons.machine] on $TIMESTAMP"
           git push
@@ -69,7 +69,7 @@ jobs:
         git add . -- :!repo/
         
         if git diff --cached --quiet; then
-          echo "No changes to commit."
+          echo "NO CHANGES TO COMMIT"
         else
           git commit -m "[labwons.machine] on $TIMESTAMP"
           git push

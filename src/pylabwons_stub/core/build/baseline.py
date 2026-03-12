@@ -34,9 +34,9 @@ class Baseline(DataFrameHeir):
             return
         except (ConnectionError, FileNotFoundError, IndexError, Exception):
             self._capture_baseline(
-            PATH.PARQUET.WICS,
-                PATH.PARQUET.AFTERMARKET,
-                PATH.PARQUET.NUMBERS
+            PATH.PARQUET.SECTOR,
+                PATH.PARQUET.MARKET,
+                PATH.PARQUET.NUMBER
             )
         return
 
@@ -46,16 +46,23 @@ class Baseline(DataFrameHeir):
 
         # Data Cleansing and Type casting
         for col in self.columns:
-            if BASELINE[col].data_type == str:
+            meta = BASELINE[col]
+            if meta.data_type == str:
                 continue
 
-            if col in ['sharesOutstanding', 'sharesPreferred', 'sharesFloating']:
-                self[col] = self[col].astype(str).str.replace('nan', '0').fillna('0')
+            self[col] = self[col].apply(lambda x: np.nan if str(x) == 'nan' else x)
             if col == 'ipo':
                 self[col] = self[col].astype(str).str.replace('-', '')
+            try:
+                if meta.data_type == int:
+                    self[col] = pd.to_numeric(self[col], errors='coerce')
+                    self[col] = self[col].astype('Int64')
+                else:
+                    self[col] = pd.to_numeric(self[col])
+            except (ValueError, TypeError, Exception) as e:
+                self.logger(f'>>> Unable to cast <{col}: {self[col].dtype} -> numeric>, {e}')
 
-            self[col] = self._typecast(self[col])
-            if BASELINE[col].data_type == self[col].dtype == float:
+            if meta.data_type == self[col].dtype == float:
                 self[col] = round(self[col], BASELINE[col].round)
 
         self['fiftyTwoWeekHigh'] = np.fmax(self['close'], self['fiftyTwoWeekHigh'].fillna(self['close']))
@@ -71,16 +78,6 @@ class Baseline(DataFrameHeir):
 
         super().__init__(self[BASELINE.keys()])
         return
-
-    def _typecast(self, series: pd.Series) -> pd.Series:
-        try:
-            return series.astype(int)
-        except (TypeError, ValueError):
-            try:
-                return series.astype(float)
-            except (TypeError, ValueError) as e:
-                self.logger(f'>>> Unable to cast <{series.name}: {series.dtype} -> numeric>, {e}')
-                return series.astype(str)
 
     def get_tickets(self, *tickets) -> List[str]:
         if tickets:
@@ -189,7 +186,7 @@ if __name__ == "__main__":
     # print(baseline)
     # print(baseline.columns)
     baseline.build('baseline')
-    # baseline.to_excel(PATH.DOWNLOADS / 'baseline.xlsx')
+    baseline.to_excel(PATH.DOWNLOADS / 'baseline.xlsx')
     # baseline.market.to_excel(PATH.DOWNLOADS / 'market.xlsx')
     # baseline.number.to_excel(PATH.DOWNLOADS / 'number.xlsx')
     # baseline.sector.to_excel(PATH.DOWNLOADS / 'sector.xlsx')
