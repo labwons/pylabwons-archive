@@ -20,16 +20,12 @@ class MarketMap(Baseline):
         super().__init__(logger)
         self.logger(f'DEPLOY MARKET MAP ON {self.td.closed}')
 
-        self._cleanse()
         self._extract()
         self._stack(by='industryName')
         self._stack(by='industryName', exclude_ticker=['005930'])
         self._stack(by='sectorName')
         self._stack(by='sectorName', exclude_ticker=['005930'])
         self._paint()
-        return
-
-    def _cleanse(self):
         return
 
     def _extract(self):
@@ -50,6 +46,9 @@ class MarketMap(Baseline):
             inplace=True,
             columns=[c for c in self.columns if not c in keys]
         )
+        for c in self.columns:
+            if c.lower().endswith('pe'):
+                self[c] = self[c].apply(lambda x: np.nan if x < 0 else x)
         return
 
     def _paint(self):
@@ -73,7 +72,7 @@ class MarketMap(Baseline):
                 n += 1
 
             if n == len(_scale) - 1:
-                return _color[_default_index]
+                return __rgb2hex(*_color[_default_index])
 
             r1, g1, b1 = _color[n]
             r2, g2, b2 = _color[n + 1]
@@ -88,6 +87,7 @@ class MarketMap(Baseline):
                                .apply(__paint, args=(meta.scale, COLORS[meta.color], meta.index))
         colors = pd.concat(objs, axis=1)
         colors.iloc[-2:] = "#C8C8C8"
+
         super(Baseline, self).__init__(pd.concat([self, colors], axis=1))
         return
 
@@ -199,7 +199,7 @@ class MarketMap(Baseline):
         return self[~self.index.str.startswith('W')]
 
     def deploy(self):
-        date = f'{self.td.closed[:4]}-{self.td.closed[4:6]}-{self.td.closed[6:8]}'
+        date = f'{self.td.closed[:4]}/{self.td.closed[4:6]}/{self.td.closed[6:8]}'
         with open(file=PATH.HTML.MARKETMAP, mode='w', encoding='utf-8') as file:
             file.write(
                 Environment(loader=FileSystemLoader(PATH.HTML.TEMPLATE)) \
@@ -251,14 +251,15 @@ class MarketMap(Baseline):
 
 if __name__ == "__main__":
     mmap = MarketMap()
-    print(mmap)
+    # print(mmap)
     # print(mmap.metadata)
     # print(mmap.columns.tolist())
+    # print(mmap.loc['0126Z0'])
 
     # data = mmap.with_005930
     # data = mmap.without_005930
     # print(data)
 
     # mmap.test_plot()
-    # mmap.deploy()
+    mmap.deploy()
 

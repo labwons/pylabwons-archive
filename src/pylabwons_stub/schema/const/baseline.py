@@ -204,7 +204,7 @@ BASELINE = SCHEMA = lw.DataDictionary(
         round=2,
     ),
     trailingEps=lw.DataDictionary(
-        kor_name='4분기합산Eps',
+        kor_name='4분기합산EPS',
         unit='원',
         data_type=float,
         round=2,
@@ -416,8 +416,8 @@ BASELINE = SCHEMA = lw.DataDictionary(
         data_type=float,
         round=2,
     ),
-    fowardPe=lw.DataDictionary(
-        kor_name='12개월선행Per',
+    forwardPe=lw.DataDictionary(
+        kor_name='12개월선행PER',
         unit='',
         data_type=float,
         round=2,
@@ -612,7 +612,7 @@ BASELINE = SCHEMA = lw.DataDictionary(
         round=0,
     ),
     industryPe=lw.DataDictionary(
-        kor_name='KRX업종Pe',
+        kor_name='KRX업종PER',
         unit='',
         data_type=float,
         round=2,

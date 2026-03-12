@@ -4,9 +4,9 @@
 name: BUILD LABWONS
 
 on:
-  # schedule:
-  #   - cron: '31 6 * * 1-5'  # KST 3:31 PM
-  #   - cron: '0 13 * * 1-5' # KST 10:00 PM
+  schedule:
+    - cron: '31 6 * * 1-5' # KST 3:31 PM
+    - cron: '0 12 * * 1-5' # KST 9:00 PM
   workflow_dispatch:
 
 permissions:

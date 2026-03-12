@@ -186,7 +186,7 @@ if __name__ == "__main__":
     # print(baseline)
     # print(baseline.columns)
     baseline.build('baseline')
-    baseline.to_excel(PATH.DOWNLOADS / 'baseline.xlsx')
+    # baseline.to_excel(PATH.DOWNLOADS / 'baseline.xlsx')
     # baseline.market.to_excel(PATH.DOWNLOADS / 'market.xlsx')
     # baseline.number.to_excel(PATH.DOWNLOADS / 'number.xlsx')
     # baseline.sector.to_excel(PATH.DOWNLOADS / 'sector.xlsx')
