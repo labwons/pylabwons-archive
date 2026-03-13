@@ -25,7 +25,13 @@ class Number(DataFrameHeir):
         for col in self.columns:
             self[col] = self[col].apply(lambda x: np.nan if str(x) == 'nan' else x)
             try:
-                self[col] = pd.to_numeric(self[col])
+                if self[col].dtype == 'object':
+                    self[col] = self[col].astype(str)
+                if self[col].dtype == int:
+                    self[col] = pd.to_numeric(self[col], errors='coerce')
+                    self[col] = self[col].astype('Int64')
+                else:
+                    self[col] = pd.to_numeric(self[col])
             except (ValueError, TypeError, Exception):
                 self[col] = self[col].astype(str)
         return
@@ -58,7 +64,7 @@ class Number(DataFrameHeir):
 
     @property
     def date(self) -> str:
-        return self['numbersDate'].unique()[0]
+        return str(int(self['numbersDate'].unique()[0]))
 
 
 if __name__ == '__main__':

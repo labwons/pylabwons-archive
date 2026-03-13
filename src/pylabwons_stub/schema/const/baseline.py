@@ -83,13 +83,13 @@ BASELINE = SCHEMA = lw.DataDictionary(
     fiftyTwoWeekHigh=lw.DataDictionary(
         kor_name='52주최고가',
         unit='원',
-        data_type=float,
+        data_type=int,
         round=0,
     ),
     fiftyTwoWeekLow=lw.DataDictionary(
         kor_name='52주최저가',
         unit='원',
-        data_type=float,
+        data_type=int,
         round=0,
     ),
     fiftyTwoWeekHighPct=lw.DataDictionary(
