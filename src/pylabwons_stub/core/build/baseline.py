@@ -74,6 +74,7 @@ class Baseline(DataFrameHeir):
                 else:
                     self[col] = pd.to_numeric(self[col])
             except (ValueError, TypeError, Exception) as e:
+                self[col] = self[col].astype(str)
                 self.logger(f'>>> Unable to cast <{col}: {self[col].dtype} -> numeric>, {e}')
 
             if meta.data_type == self[col].dtype == float:
@@ -162,7 +163,7 @@ class Baseline(DataFrameHeir):
                 self.logger(f'>>> DROP: {dump}')
                 for f in dump:
                     (PATH.LOG / f).unlink(missing_ok=True)
-            self.log.baseline.log = os.listdir(PATH.LOG)
+            self.log.baseline.log = sorted(os.listdir(PATH.LOG))
             with open(PATH.JSON.BUILD, 'w', encoding='utf-8') as f:
                 json.dump(self.log, f, ensure_ascii=False, indent=4)
 

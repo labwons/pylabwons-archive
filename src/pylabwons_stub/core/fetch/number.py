@@ -2,6 +2,7 @@ from pylabwons_stub.schema.dataframe import DataFrameHeir
 from pylabwons_stub.schema import market as SCHEMA
 from pylabwons import FnGuide
 from tqdm import auto
+import numpy as np
 import pandas as pd
 import time
 
@@ -18,6 +19,15 @@ class Number(DataFrameHeir):
             self.server_date = FnGuide('005930').date
         except (ConnectionError, IndexError):
             self.server_date = 'failed'
+        return
+
+    def _typecast(self):
+        for col in self.columns:
+            self[col] = self[col].apply(lambda x: np.nan if str(x) == 'nan' else x)
+            try:
+                self[col] = pd.to_numeric(self[col])
+            except (ValueError, TypeError, Exception):
+                self[col] = self[col].astype(str)
         return
 
     def fetch(self, *tickers:str):
@@ -40,7 +50,9 @@ class Number(DataFrameHeir):
                 continue
             if n and n % 50 == 0:
                 time.sleep(3)
+
         super().__init__(pd.concat(objs, axis=1).T)
+        self._typecast()
         self.logger(f'{"." * 30} {len(self)} STOCKS / RUNTIME: {time.perf_counter() - tic:.2f}s')
         return
 
