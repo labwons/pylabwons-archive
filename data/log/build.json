@@ -2,8 +2,8 @@
     "baseline": {
         "date": "20260312",
         "log": [
-            "baseline-20260311.parquet",
             "baseline-20260310.parquet",
+            "baseline-20260311.parquet",
             "baseline-20260312.parquet"
         ]
     },
@@ -11,9 +11,9 @@
         "date": "20260312"
     },
     "number": {
-        "date": "20260310"
+        "date": "20260312.0"
     },
     "sector": {
-        "date": "20260310"
+        "date": "20260312"
     }
 }
