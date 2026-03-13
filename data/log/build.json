@@ -1,10 +1,11 @@
 {
     "baseline": {
-        "date": "20260312",
+        "date": "20260313",
         "log": [
             "baseline-20260310.parquet",
             "baseline-20260311.parquet",
-            "baseline-20260312.parquet"
+            "baseline-20260312.parquet",
+            "baseline-20260313.parquet"
         ]
     },
     "market": {
