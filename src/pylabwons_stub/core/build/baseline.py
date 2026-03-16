@@ -4,6 +4,7 @@ from pylabwons_stub.core.fetch.market import Market
 from pylabwons_stub.core.fetch.number import Number
 from pylabwons_stub.core.fetch.sector import Sector
 from pylabwons_stub.env import HOST, PATH, RUNTIME
+from datetime import datetime
 from typing import Callable, List
 import numpy as np
 import pandas as pd
@@ -24,7 +25,7 @@ class Baseline(DataFrameHeir):
         with open(PATH.JSON.BUILD, 'r', encoding='utf-8') as f:
             self.log = lw.DataDictionary(json.load(f))
 
-        self.market = Market(src=PATH.PARQUET.MARKET, logger=logger)
+        self.market = Market(src=PATH.PARQUET.MARKET, logger=logger, td=self.td)
         self.number = Number(src=PATH.PARQUET.NUMBER, logger=logger)
         self.sector = Sector(src=PATH.PARQUET.SECTOR, logger=logger)
 
@@ -125,7 +126,13 @@ class Baseline(DataFrameHeir):
 
         if 'market' in tickets:
             try:
-                self.market.fetch()
+                if self.td.is_open():
+                    self.log.prices.time = self.td.clock("%Y%m%d %H:%M:%s")
+                    prices = self.market.fetch_close()
+                    prices.to_parquet(PATH.PARQUET.PRICES, engine='pyarrow')
+                else:
+                    prices = pd.read_parquet(PATH.PARQUET.PRICES, engine='pyarrow')
+                self.market.fetch(prices)
                 self.market.to_parquet(PATH.PARQUET.MARKET, engine='pyarrow')
                 self.log.market.date = str(self.market.date)
             except (ConnectionError, IndexError, KeyError, Exception) as e:
@@ -178,7 +185,7 @@ if __name__ == "__main__":
     baseline = Baseline()
     # print(baseline)
     # print(baseline.columns)
-    baseline.build('baseline')
+    baseline.build('market')
     # baseline.to_excel(PATH.DOWNLOADS / 'baseline.xlsx')
     # baseline.market.to_excel(PATH.DOWNLOADS / 'market.xlsx')
     # baseline.number.to_excel(PATH.DOWNLOADS / 'number.xlsx')

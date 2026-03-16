@@ -14,7 +14,7 @@ class Market(DataFrameHeir):
     def __init__(self, src: str = SCHEMA.MARKET, **kwargs):
         super().__init__(src, **kwargs)
         self.logger = kwargs.get('logger', print)
-        self.td = TradingDate()
+        self.td = kwargs.get('td', TradingDate())
         return
 
     def fetch(self, close: DataFrame = DataFrame()):
@@ -30,20 +30,22 @@ class Market(DataFrameHeir):
 
         tic = time.perf_counter()
         self.logger(f'FETCH AFTER MARKET DATA ON {self.td.closed}')
+        if close.empty:
+            close = self.fetch_close()
 
         objs = []
         for name, func, kwargs in [
             ('GENERAL INFO', self.fetch_general, dict()),
             ('MARKET CAP', self.fetch_market_cap, dict(date=self.td.closed)),
             ('FOREIGN RATE', self.fetch_foreign_rate, dict(date=self.td.closed)),
-            ('MARKET TYPE', self.fetch_market_cap_type, dict())
+            ('MARKET TYPE', self.fetch_market_cap_type, dict()),
+            ('MARKET RETURN', self.fetch_returns(close), dict(close=close))
         ]:
             _fetch(name, objs, func, **kwargs)
 
         try:
             data = pd.concat(objs, axis=1)
             data = data[data['market'].isin(['kosdaq', 'kospi'])]
-            # data = data.join(self.fetch_returns(td, data), how='left')
             data['tradingDate'] = str(self.td.closed)
 
             super().__init__(data)
@@ -52,7 +54,7 @@ class Market(DataFrameHeir):
             raise ConnectionError(e)
         return
 
-    def fetch_close(self, *tickers) -> DataFrame:
+    def fetch_close(self) -> DataFrame:
         td = TradingDate()
         td.closed = self.td.latest
 
@@ -65,8 +67,6 @@ class Market(DataFrameHeir):
             objs[td - n] = self.fetch_market_cap(date=td - n)
         data = pd.concat(objs, axis=1)
         data = data[data.index.isin(base.index) & (data[(td.closed, 'volume')] > 0)]
-        if tickers:
-            data = data[data.index.isin(tickers)]
 
         N = list(SCHEMA.YIELD_DAYS.values())[-1]
         shares = data[(td.closed, 'shares')] / data[(td - N, 'shares')] - 1
@@ -116,47 +116,58 @@ class Market(DataFrameHeir):
     def date(self) -> str:
         return self['tradingDate'].unique()[0]
 
-    @staticmethod
-    def fetch_returns(td: TradingDate, base: DataFrame) -> DataFrame:
-        base = base[base['volume'] != 0]
+    def fetch_returns(self, close: DataFrame) -> DataFrame:
+        dates = close.columns.levels[0].unique().sort_values(ascending=False)
+        base = close[dates[0]].copy()
 
-        objs = {'D+0': stock.get_market_cap_by_ticker(date=td.closed, market='ALL')}
-        for col, n in SCHEMA.YIELD_DAYS.items():
-            objs[col] = stock.get_market_cap_by_ticker(date=td - n, market='ALL')
-        data = pd.concat(objs, axis=1)
-        base = data[data.index.isin(base.index)]
+        by_price = pd.concat({date: close[(date, 'close')] for date in dates}, axis=1) \
+                   .rename(columns=dict(zip(dates, ['D0'] + list(SCHEMA.YIELD_DAYS.keys()))))
+        by_price = by_price[by_price.index.isin(base[base['calc'] == 'close'].index)]
+        by_cap = pd.concat({date: close[(date, 'marketCap')] for date in dates}, axis=1) \
+                 .rename(columns=dict(zip(dates, ['D0'] + list(SCHEMA.YIELD_DAYS.keys()))))
+        by_cap = by_cap[by_cap.index.isin(base[base['calc'] == 'marketCap'].index)]
 
-        # 기본 수익률 계산
-        returns = pd.concat({dt: base['D+0']['종가'] / base[dt]['종가'] - 1 for dt in objs}, axis=1) \
-            .drop(columns=['D+0'])
+        by_price = pd.concat({col: (by_price['D0'] - 1) / by_price[col] for col in by_price}, axis=1)
+        by_cap = pd.concat({col: (by_cap['D0'] - 1) / by_cap[col] for col in by_cap}, axis=1)
 
-        # 상장 주식수 변화 감지: -1Y 대비 1% 이상 변화 종목 대상
-        shares_changed = base['D+0']['상장주식수'] / base['returnOn1Year']['상장주식수'] - 1
-        diff = shares_changed[shares_changed.abs() >= 0.01].index
-        diff_new = diff[diff.isin(base[base[('D+0', '시가총액')] >= base[('D+0', '시가총액')].median()].index)]
-        diff_cap = diff[~diff.isin(diff_new)]
-
-        # 상장 주식수 변화 대상 중 주요 종목은 종가 기준 수익률 재계산
-        close_objs = {}
-        for ticker in diff_new:
-            close_objs[ticker] = stock.get_market_ohlcv_by_date(fromdate=td - 365, todate=td.closed, ticker=ticker)[
-                '종가']
-        close: DataFrame = pd.concat(close_objs, axis=1)
-        times = [datetime.strptime(td - n, '%Y%m%d') for n in SCHEMA.YIELD_DAYS.values()]
-        close = close.reindex(times + [close.index[-1]], method='ffill')
-        return_by_close = ((close.iloc[-1] / close) - 1).iloc[:-1].T
-        return_by_close.columns = returns.columns
-        returns.update(return_by_close)
-
-        # 상장 주식수 변화 대상 중 비 주류 종목은 시가총액 기준 수익률 재계산 (속도 향상 목적)
-        return_by_cap: DataFrame = pd.concat({
-            dt: base['D+0']['시가총액'] / base[dt]['시가총액'] - 1 for dt in objs
-        }, axis=1)
-        return_by_cap.drop(columns=['D+0'], inplace=True)
-        return_by_cap = return_by_cap.loc[diff_cap]
-        returns.update(return_by_cap)
-
-        return round(100 * returns, 2)
+        return pd.concat([by_price, by_cap], axis=0).drop(columns=['D0'])
+        # objs = {'D+0': stock.get_market_cap_by_ticker(date=td.closed, market='ALL')}
+        # for col, n in SCHEMA.YIELD_DAYS.items():
+        #     objs[col] = stock.get_market_cap_by_ticker(date=td - n, market='ALL')
+        # data = pd.concat(objs, axis=1)
+        # base = data[data.index.isin(base.index)]
+        #
+        # # 기본 수익률 계산
+        # returns = pd.concat({dt: base['D+0']['종가'] / base[dt]['종가'] - 1 for dt in objs}, axis=1) \
+        #     .drop(columns=['D+0'])
+        #
+        # # 상장 주식수 변화 감지: -1Y 대비 1% 이상 변화 종목 대상
+        # shares_changed = base['D+0']['상장주식수'] / base['returnOn1Year']['상장주식수'] - 1
+        # diff = shares_changed[shares_changed.abs() >= 0.01].index
+        # diff_new = diff[diff.isin(base[base[('D+0', '시가총액')] >= base[('D+0', '시가총액')].median()].index)]
+        # diff_cap = diff[~diff.isin(diff_new)]
+        #
+        # # 상장 주식수 변화 대상 중 주요 종목은 종가 기준 수익률 재계산
+        # close_objs = {}
+        # for ticker in diff_new:
+        #     close_objs[ticker] = stock.get_market_ohlcv_by_date(fromdate=td - 365, todate=td.closed, ticker=ticker)[
+        #         '종가']
+        # close: DataFrame = pd.concat(close_objs, axis=1)
+        # times = [datetime.strptime(td - n, '%Y%m%d') for n in SCHEMA.YIELD_DAYS.values()]
+        # close = close.reindex(times + [close.index[-1]], method='ffill')
+        # return_by_close = ((close.iloc[-1] / close) - 1).iloc[:-1].T
+        # return_by_close.columns = returns.columns
+        # returns.update(return_by_close)
+        #
+        # # 상장 주식수 변화 대상 중 비 주류 종목은 시가총액 기준 수익률 재계산 (속도 향상 목적)
+        # return_by_cap: DataFrame = pd.concat({
+        #     dt: base['D+0']['시가총액'] / base[dt]['시가총액'] - 1 for dt in objs
+        # }, axis=1)
+        # return_by_cap.drop(columns=['D+0'], inplace=True)
+        # return_by_cap = return_by_cap.loc[diff_cap]
+        # returns.update(return_by_cap)
+        #
+        # return round(100 * returns, 2)
 
 
 

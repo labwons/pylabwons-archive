@@ -38,12 +38,12 @@ class PATH:
     ROOT = _get_root()
     DATA = ROOT / "data"
     PARQUET = DataDictionary(
+        BASELINE=DATA / "src/baseline.parquet",
         MARKET = DATA / "src/market.parquet",
-        BASELINE = DATA / "src/baseline.parquet",
-        SECTOR = DATA / "src/sector.parquet",
         NUMBER = DATA / "src/number.parquet",
+        PRICES = DATA / "src/prices.parquet",
+        SECTOR = DATA / "src/sector.parquet",
     )
-    OHLCV = DATA / "src/ohlcv"
     LOG = DATA / "src/log"
     CSV = DataDictionary(
         BASELINE = DATA / "src/baseline.csv"
@@ -55,7 +55,6 @@ class PATH:
         MARKETMAP = DATA / "src/html/marketmap.html",
         TEMPLATE = DATA / "src/html/template",
     )
-
 
     if HOST in ['hkefico', 'local']:
         DOWNLOADS = Path(os.getenv('USERPROFILE')) / 'Downloads'
