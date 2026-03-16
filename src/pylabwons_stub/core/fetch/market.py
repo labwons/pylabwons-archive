@@ -2,12 +2,10 @@ from pylabwons_stub.schema.dataframe import DataFrameHeir
 from pylabwons_stub.schema import market as SCHEMA
 from pylabwons import TradingDate
 from datetime import datetime
-from pathlib import Path
-from pandas import DataFrame, Series
+from pandas import DataFrame, Series, MultiIndex
 from pykrx import stock
-from typing import Union
 import pandas as pd
-import requests, io, time, os
+import requests, io, time
 
 
 class Market(DataFrameHeir):
@@ -22,43 +20,6 @@ class Market(DataFrameHeir):
     @property
     def date(self) -> str:
         return self['tradingDate'].unique()[0]
-
-    def backfill(self, path: Union[str, Path]):
-        dm1 = stock.get_market_cap_by_ticker(self.td - 1, market='ALL')
-        dp0 = stock.get_market_cap_by_ticker(self.td.closed, market='ALL')
-        shares = pd.concat({'d-1': dm1['상장주식수'], 'd+0': dp0['상장주식수']}, axis=1)
-        shares = shares[shares['d-1'] != shares['d+0']]
-        shares = shares[shares.index.isin(self.index)].index
-        market = stock.get_market_ohlcv_by_ticker(self.td.closed, market='ALL')
-        self.logger(f'>>> [BACKFILL]')
-        self.logger(f'>>> | CURRENT: {len(os.listdir(path))}')
-        self.logger(f'>>> | SHARES CHANGED: {len(shares)}')
-
-        for ticker in self.index:
-            try:
-                ohlcv = pd.read_parquet(Path(path) / f'{ticker}.parquet', engine='pyarrow')
-            except (FileExistsError, FileNotFoundError, Exception):
-                self.fetch_ohlcv(ticker, todate=self.td.closed) \
-                    .to_parquet(Path(path) / f'{ticker}.parquet', engine='pyarrow')
-                continue
-
-            if ticker in shares or ohlcv.empty:
-                self.fetch_ohlcv(ticker, todate=self.td.closed) \
-                    .to_parquet(Path(path) / f'{ticker}.parquet', engine='pyarrow')
-                continue
-
-            if ohlcv.index[-1].strftime("%Y%m%d") == self.td.closed:
-                continue
-
-            try:
-                catch = market.loc[[ticker]]
-                catch.index = [datetime.strptime(self.td.closed, "%Y%m%d")]
-                ohlcv = pd.concat([ohlcv, catch], axis=0)
-                ohlcv.to_parquet(Path(path) / f'{ticker}.parquet', engine='pyarrow')
-            except (FileExistsError, FileNotFoundError, Exception):
-                self.fetch_ohlcv(ticker, todate=self.td.closed) \
-                    .to_parquet(Path(path) / f'{ticker}.parquet', engine='pyarrow')
-        return
 
     def fetch(self):
         tic = time.perf_counter()
@@ -103,15 +64,12 @@ class Market(DataFrameHeir):
         return ohlcv
 
     @SCHEMA.marketfetch("MARKET CAP")
-    def fetch_market_cap(self, date: str) -> DataFrame:
-        data = stock.get_market_cap_by_ticker(date=date, market='ALL').astype('float64')
-        data.rename(columns=SCHEMA.MARKET_CAP, inplace=True)
-        return data[SCHEMA.MARKET_CAP.values()]
+    def fetch_market_cap(self, date: str, **kwargs) -> DataFrame:
+        return stock.get_market_cap_by_ticker(date=date, market='ALL').astype('Int64')
 
     @SCHEMA.marketfetch("FOREIGN RATE")
     def fetch_foreign_rate(self, date: str) -> DataFrame:
         data = stock.get_exhaustion_rates_of_foreign_investment(date=date, market='ALL').astype('float64')
-        data.rename(columns=SCHEMA.FOREIGN_RATE, inplace=True)
         return data[SCHEMA.FOREIGN_RATE.values()]
 
     @SCHEMA.marketfetch("GENERAL INFO")
@@ -130,6 +88,40 @@ class Market(DataFrameHeir):
         kq150 = Series(index=stock.get_index_portfolio_deposit_file('1028')).fillna('kosdaq150')
         data = pd.concat([ks200, kq150], axis=0)
         data.name = 'groupByMarketCap'
+        return data
+
+    @SCHEMA.marketfetch("DISCRETE", "log off")
+    def fetch_discrete(self, date: str, *tickers) -> DataFrame:
+        td = TradingDate()
+        td.closed = date
+
+        # 기본 데이터 설정
+        base = self.fetch_market_cap(date=td.closed, log='log off')
+        base['calc'] = 'close'
+
+        objs = {'D+0': base}
+        for n in SCHEMA.YIELD_DAYS.values():
+            objs[f'D-{n}'] = self.fetch_market_cap(date=td - n, log='log off')
+        data = pd.concat(objs, axis=1)
+        data = data[data.index.isin(base.index) & (data[('D+0', 'volume')] > 0)]
+        if tickers:
+            data = data[data.index.isin(tickers)]
+
+        N = list(SCHEMA.YIELD_DAYS.values())[-1]
+        shares = data[('D+0', 'shares')] / data[(f'D-{N}', 'shares')] - 1
+        shares_diff = shares[shares.abs() >= 0.01].index
+        sized_diff = base[base.index.isin(shares_diff) & (base.marketCap < base.marketCap.median())].index
+        update_diff = base[base.index.isin(shares_diff) & (base.marketCap >= base.marketCap.median())].index
+        data.loc[sized_diff, ('D+0', 'calc')] = 'marketCap'
+
+        times = [datetime.strptime(td - n, '%Y%m%d') for n in SCHEMA.YIELD_DAYS.values()]
+        close_objs = {}
+        for ticker in update_diff:
+            close_objs[ticker] = stock.get_market_ohlcv_by_date(fromdate=td - 365, todate=td.closed, ticker=ticker)[
+                '종가']
+        close: DataFrame = pd.concat(close_objs, axis=1).reindex(times, method='ffill').T
+        close.columns = MultiIndex.from_tuples([(f'D-{n}', 'close') for n in SCHEMA.YIELD_DAYS.values()])
+        data.update(close)
         return data
 
     @SCHEMA.marketfetch("RETURNS")
