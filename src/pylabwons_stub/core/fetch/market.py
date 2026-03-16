@@ -17,29 +17,34 @@ class Market(DataFrameHeir):
         self.td = TradingDate()
         return
 
-    @property
-    def date(self) -> str:
-        return self['tradingDate'].unique()[0]
+    def fetch(self, close: DataFrame = DataFrame()):
 
-    def fetch(self):
+        def _fetch(_name: str, _objs, _func, **_kwargs):
+            try:
+                self.logger(f'>>> [{_name}]', end=' ... ')
+                _objs.append(_func(**_kwargs))
+                self.logger('OK')
+            except (KeyError, IndexError, Exception) as _e:
+                self.logger(f'NG: {_e}')
+                raise ConnectionError(f'FETCH FAILED')
+
         tic = time.perf_counter()
-        td = TradingDate()
-        self.logger(f'FETCH AFTER MARKET DATA ON {td.closed}')
-        try:
-            objs = [
-                self.fetch_general(),
-                self.fetch_market_cap(date=td.closed),
-                self.fetch_foreign_rate(date=td.closed),
-                self.fetch_market_cap_type(),
-            ]
-            for obj in objs:
-                if obj.empty:
-                    raise ConnectionError(f'FETCH FAILED')
+        self.logger(f'FETCH AFTER MARKET DATA ON {self.td.closed}')
 
+        objs = []
+        for name, func, kwargs in [
+            ('GENERAL INFO', self.fetch_general, dict()),
+            ('MARKET CAP', self.fetch_market_cap, dict(date=self.td.closed)),
+            ('FOREIGN RATE', self.fetch_foreign_rate, dict(date=self.td.closed)),
+            ('MARKET TYPE', self.fetch_market_cap_type, dict())
+        ]:
+            _fetch(name, objs, func, **kwargs)
+
+        try:
             data = pd.concat(objs, axis=1)
             data = data[data['market'].isin(['kosdaq', 'kospi'])]
-            data = data.join(self.fetch_returns(td, data), how='left')
-            data['tradingDate'] = str(td.closed)
+            # data = data.join(self.fetch_returns(td, data), how='left')
+            data['tradingDate'] = str(self.td.closed)
 
             super().__init__(data)
             self.logger(f'{"." * 30} {len(self)} STOCKS / RUNTIME: {time.perf_counter() - tic:.2f}s')
@@ -47,61 +52,17 @@ class Market(DataFrameHeir):
             raise ConnectionError(e)
         return
 
-    @SCHEMA.marketfetch("OHLCV", "log off")
-    def fetch_ohlcv(self, ticker: str, **kwargs) -> DataFrame:
-        ohlcv = stock.get_market_ohlcv_by_date(
-            fromdate=kwargs.get('fromdate', '19900101'),
-            todate=kwargs.get('todate', self.td.latest),
-            ticker=ticker,
-            freq=kwargs.get('freq', 'd')
-        )
-
-        trade_stop = ohlcv[ohlcv.시가 == 0].copy()
-        if not trade_stop.empty:
-            ohlcv.loc[trade_stop.index, ['시가', '고가', '저가']] = trade_stop.종가
-        ohlcv.index.name = 'date'
-        ohlcv.drop(columns=['등락률'], inplace=True)
-        return ohlcv
-
-    @SCHEMA.marketfetch("MARKET CAP")
-    def fetch_market_cap(self, date: str, **kwargs) -> DataFrame:
-        return stock.get_market_cap_by_ticker(date=date, market='ALL').astype('Int64')
-
-    @SCHEMA.marketfetch("FOREIGN RATE")
-    def fetch_foreign_rate(self, date: str) -> DataFrame:
-        data = stock.get_exhaustion_rates_of_foreign_investment(date=date, market='ALL').astype('float64')
-        return data[SCHEMA.FOREIGN_RATE.values()]
-
-    @SCHEMA.marketfetch("GENERAL INFO")
-    def fetch_general(self) -> DataFrame:
-        resp = requests.get(SCHEMA.KRX_GENERAL).text
-        data = pd.read_html(io=io.StringIO(resp), encoding='euc-kr')[0].set_index(keys='종목코드')
-        data.index = data.index.astype(str).str.zfill(6)
-        data.index.name = 'ticker'
-        data.rename(columns=SCHEMA.GENERAL, inplace=True)
-        data['market'] = data['market'].replace('코스닥', 'kosdaq').replace('유가', 'kospi')
-        return data[SCHEMA.GENERAL.values()]
-
-    @SCHEMA.marketfetch("MARKET CAP TYPE")
-    def fetch_market_cap_type(self) -> Series:
-        ks200 = Series(index=stock.get_index_portfolio_deposit_file('2203')).fillna('kospi200')
-        kq150 = Series(index=stock.get_index_portfolio_deposit_file('1028')).fillna('kosdaq150')
-        data = pd.concat([ks200, kq150], axis=0)
-        data.name = 'groupByMarketCap'
-        return data
-
-    @SCHEMA.marketfetch("DISCRETE", "log off")
-    def fetch_discrete(self, date: str, *tickers) -> DataFrame:
+    def fetch_close(self, *tickers) -> DataFrame:
         td = TradingDate()
-        td.closed = date
+        td.closed = self.td.latest
 
         # 기본 데이터 설정
-        base = self.fetch_market_cap(date=td.closed, log='log off')
+        base = self.fetch_market_cap(date=td.closed)
         base['calc'] = 'close'
 
         objs = {'D+0': base}
         for n in SCHEMA.YIELD_DAYS.values():
-            objs[f'D-{n}'] = self.fetch_market_cap(date=td - n, log='log off')
+            objs[f'D-{n}'] = self.fetch_market_cap(date=td - n)
         data = pd.concat(objs, axis=1)
         data = data[data.index.isin(base.index) & (data[('D+0', 'volume')] > 0)]
         if tickers:
@@ -124,8 +85,40 @@ class Market(DataFrameHeir):
         data.update(close)
         return data
 
-    @SCHEMA.marketfetch("RETURNS")
-    def fetch_returns(self, td: TradingDate, base: DataFrame) -> DataFrame:
+    @staticmethod
+    def fetch_market_cap(date) -> DataFrame:
+        data = stock.get_market_cap_by_ticker(date=date, market='ALL').astype('Int64')
+        return data.rename(columns=SCHEMA.MARKET_CAP)[SCHEMA.MARKET_CAP.values()]
+
+    @staticmethod
+    def fetch_foreign_rate(date: str) -> DataFrame:
+        data = stock.get_exhaustion_rates_of_foreign_investment(date=date, market='ALL').astype('float64')
+        return data.rename(columns=SCHEMA.FOREIGN_RATE)[SCHEMA.FOREIGN_RATE.values()]
+
+    @staticmethod
+    def fetch_general() -> DataFrame:
+        resp = requests.get(SCHEMA.KRX_GENERAL).text
+        data = pd.read_html(io=io.StringIO(resp), encoding='euc-kr')[0].set_index(keys='종목코드')
+        data.index = data.index.astype(str).str.zfill(6)
+        data.index.name = 'ticker'
+        data.rename(columns=SCHEMA.GENERAL, inplace=True)
+        data['market'] = data['market'].replace('코스닥', 'kosdaq').replace('유가', 'kospi')
+        return data[SCHEMA.GENERAL.values()]
+
+    @staticmethod
+    def fetch_market_cap_type() -> Series:
+        ks200 = Series(index=stock.get_index_portfolio_deposit_file('2203')).fillna('kospi200')
+        kq150 = Series(index=stock.get_index_portfolio_deposit_file('1028')).fillna('kosdaq150')
+        data = pd.concat([ks200, kq150], axis=0)
+        data.name = 'groupByMarketCap'
+        return data
+
+    @property
+    def date(self) -> str:
+        return self['tradingDate'].unique()[0]
+
+    @staticmethod
+    def fetch_returns(td: TradingDate, base: DataFrame) -> DataFrame:
         base = base[base['volume'] != 0]
 
         objs = {'D+0': stock.get_market_cap_by_ticker(date=td.closed, market='ALL')}
