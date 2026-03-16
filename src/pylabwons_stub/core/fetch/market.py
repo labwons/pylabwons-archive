@@ -60,28 +60,27 @@ class Market(DataFrameHeir):
         base = self.fetch_market_cap(date=td.closed)
         base['calc'] = 'close'
 
-        objs = {'D+0': base}
+        objs = {td.closed: base}
         for n in SCHEMA.YIELD_DAYS.values():
-            objs[f'D-{n}'] = self.fetch_market_cap(date=td - n)
+            objs[td - n] = self.fetch_market_cap(date=td - n)
         data = pd.concat(objs, axis=1)
-        data = data[data.index.isin(base.index) & (data[('D+0', 'volume')] > 0)]
+        data = data[data.index.isin(base.index) & (data[(td.closed, 'volume')] > 0)]
         if tickers:
             data = data[data.index.isin(tickers)]
 
         N = list(SCHEMA.YIELD_DAYS.values())[-1]
-        shares = data[('D+0', 'shares')] / data[(f'D-{N}', 'shares')] - 1
+        shares = data[(td.closed, 'shares')] / data[(td - N, 'shares')] - 1
         shares_diff = shares[shares.abs() >= 0.01].index
         sized_diff = base[base.index.isin(shares_diff) & (base.marketCap < base.marketCap.median())].index
         update_diff = base[base.index.isin(shares_diff) & (base.marketCap >= base.marketCap.median())].index
-        data.loc[sized_diff, ('D+0', 'calc')] = 'marketCap'
+        data.loc[sized_diff, (td.closed, 'calc')] = 'marketCap'
 
         times = [datetime.strptime(td - n, '%Y%m%d') for n in SCHEMA.YIELD_DAYS.values()]
         close_objs = {}
         for ticker in update_diff:
-            close_objs[ticker] = stock.get_market_ohlcv_by_date(fromdate=td - 365, todate=td.closed, ticker=ticker)[
-                '종가']
+            close_objs[ticker] = stock.get_market_ohlcv_by_date(fromdate=td - N, todate=td.closed, ticker=ticker)['종가']
         close: DataFrame = pd.concat(close_objs, axis=1).reindex(times, method='ffill').T
-        close.columns = MultiIndex.from_tuples([(f'D-{n}', 'close') for n in SCHEMA.YIELD_DAYS.values()])
+        close.columns = MultiIndex.from_tuples([(td - n, 'close') for n in SCHEMA.YIELD_DAYS.values()])
         data.update(close)
         return data
 
