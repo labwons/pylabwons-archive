@@ -4,6 +4,29 @@ from typing import Dict
 import functools
 
 
+RENAME = dict(
+    회사명="name",
+    시장구분='market',
+    업종='industryNameKrx',
+    주요제품='products',
+    상장일='ipo',
+
+    시가='open',
+    고가='high',
+    저가='low',
+    종가='close',
+    시가총액='marketCap',
+    거래량='volume',
+    거래대금='amount',
+    상장주식수='shares',
+    등락률='returnOn1Day',
+
+    보유수량='foreignSharesHolding',
+    지분율='foreignRate',
+    한도수량='foreignSharesLimit',
+    한도소진률='foreignRateByLimit'
+)
+
 GENERAL = dict(
     회사명="name",
     시장구분='market',
@@ -18,6 +41,17 @@ MARKET_CAP = dict(
     거래량='volume',
     거래대금='amount',
     상장주식수='shares'
+)
+
+MARKET_OHLCV = dict(
+    시가='open',
+    고가='high',
+    저가='low',
+    종가='close',
+    거래량='volume',
+    거래대금='amount',
+    등락률='returnOn1Day',
+    시가총액='marketCap'
 )
 
 FOREIGN_RATE = dict(
@@ -38,21 +72,21 @@ YIELD_DAYS = dict(
     returnOn1Year=365,
 )
 
-def marketfetch(name):
+
+def marketfetch(name, log: str = 'log on'):
 
     def decorator(func):
 
         @functools.wraps(func)
         def wrapper(self, *args, **kwargs):
-            if hasattr(self, 'logger') and self.logger:
+            if (log == 'log on') and hasattr(self, 'logger'):
                 self.logger(f">>> [{name}]", end=" ... ")
 
             try:
                 result = func(self, *args, **kwargs)
-
-                if hasattr(self, 'logger') and self.logger:
+                if (log == 'log on') and hasattr(self, 'logger'):
                     self.logger(f"OK")
-                return result
+                return result.rename(columns={prev: RENAME[prev] for prev in result if prev in RENAME})
 
             except Exception as e:
                 if hasattr(self, 'logger') and self.logger:
