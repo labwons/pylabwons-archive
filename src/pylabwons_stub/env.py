@@ -43,6 +43,7 @@ class PATH:
         SECTOR = DATA / "src/sector.parquet",
         NUMBER = DATA / "src/number.parquet",
     )
+    OHLCV = DATA / "src/ohlcv"
     LOG = DATA / "src/log"
     CSV = DataDictionary(
         BASELINE = DATA / "src/baseline.csv"

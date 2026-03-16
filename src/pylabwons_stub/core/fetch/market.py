@@ -2,10 +2,12 @@ from pylabwons_stub.schema.dataframe import DataFrameHeir
 from pylabwons_stub.schema import market as SCHEMA
 from pylabwons import TradingDate
 from datetime import datetime
+from pathlib import Path
 from pandas import DataFrame, Series
 from pykrx import stock
+from typing import Union
 import pandas as pd
-import requests, io, time
+import requests, io, time, os
 
 
 class Market(DataFrameHeir):
@@ -25,21 +27,30 @@ class Market(DataFrameHeir):
         dm1 = stock.get_market_cap_by_ticker(self.td - 1, market='ALL')
         dp0 = stock.get_market_cap_by_ticker(self.td.closed, market='ALL')
         shares = pd.concat({'d-1': dm1['상장주식수'], 'd+0': dp0['상장주식수']}, axis=1)
-        shares = shares[shares['d-1'] != shares['D+0']]
+        shares = shares[shares['d-1'] != shares['d+0']]
         shares = shares[shares.index.isin(self.index)].index
-        market = stock.get_market_ohlcv_by_ticket(self.td.closed, market='ALL')
+        market = stock.get_market_ohlcv_by_ticker(self.td.closed, market='ALL')
         self.logger(f'>>> [BACKFILL]')
         self.logger(f'>>> | CURRENT: {len(os.listdir(path))}')
         self.logger(f'>>> | SHARES CHANGED: {len(shares)}')
 
         for ticker in self.index:
-            if ticker in shares:
+            try:
+                ohlcv = pd.read_parquet(Path(path) / f'{ticker}.parquet', engine='pyarrow')
+            except (FileExistsError, FileNotFoundError, Exception):
                 self.fetch_ohlcv(ticker, todate=self.td.closed) \
                     .to_parquet(Path(path) / f'{ticker}.parquet', engine='pyarrow')
                 continue
 
+            if ticker in shares or ohlcv.empty:
+                self.fetch_ohlcv(ticker, todate=self.td.closed) \
+                    .to_parquet(Path(path) / f'{ticker}.parquet', engine='pyarrow')
+                continue
+
+            if ohlcv.index[-1].strftime("%Y%m%d") == self.td.closed:
+                continue
+
             try:
-                ohlcv = pd.read_parquet(Path(path) / f'{ticker}.parquet', engine='pyarrow')
                 catch = market.loc[[ticker]]
                 catch.index = [datetime.strptime(self.td.closed, "%Y%m%d")]
                 ohlcv = pd.concat([ohlcv, catch], axis=0)
@@ -88,7 +99,7 @@ class Market(DataFrameHeir):
         if not trade_stop.empty:
             ohlcv.loc[trade_stop.index, ['시가', '고가', '저가']] = trade_stop.종가
         ohlcv.index.name = 'date'
-        ohlcv.drop(columns=['returnOn1Day'], inplace=True)
+        ohlcv.drop(columns=['등락률'], inplace=True)
         return ohlcv
 
     @SCHEMA.marketfetch("MARKET CAP")
