@@ -126,11 +126,7 @@ class Baseline(DataFrameHeir):
 
         if 'market' in tickets:
             try:
-
-                if self.td.is_open():
-                    self.log.prices.time = self.td.clock("%Y%m%d %H:%M:%S")
-                    prices = self.market.fetch_close()
-                    prices.to_parquet(PATH.PARQUET.PRICES, engine='pyarrow')
+                self.log.prices.time = self.td.clock("%Y%m%d %H:%M:%S")
                 self.market.fetch()
                 self.market.to_parquet(PATH.PARQUET.MARKET, engine='pyarrow')
                 self.log.market.date = str(self.market.date)

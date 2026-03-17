@@ -27,29 +27,19 @@ class Market(DataFrameHeir):
         except (KeyError, IndexError, Exception) as _e:
             self.logger(f'NG: {_e}')
             raise ConnectionError(f'FETCH FAILED')
-    def fetch(self, close: DataFrame = DataFrame()):
+    def fetch(self):
         tic = time.perf_counter()
         lap = self.td.clock('%Y%m%d %H:%M:%S') if self.td.is_open() else f'{self.td.closed} 15:30'
         self.logger(f'FETCH AFTER MARKET DATA ON {lap}')
 
-        objs = [self("GENERAL INFO", self.fetch_general)]
         caps = self("MARKET CAP", self.fetch_market_cap, date=self.td.latest)
-        objs.append(caps)
-        objs.append(self("FOREIGN RATE", self.fetch_foreign_rate, date=self.td.latest))
-        objs.append(self("MARKET TYPE", self.fetch_market_cap_type))
-        objs.append(self("MARKET RETURN", self.fetch_returns, caps=caps))
-        # close = pd.read_parquet(PATH.PARQUET.PRICES, engine='pyarrow')
+        objs = [self("GENERAL INFO", self.fetch_general), caps,
+                self("FOREIGN RATE", self.fetch_foreign_rate, date=self.td.latest),
+                self("MARKET TYPE", self.fetch_market_cap_type)]
 
-        #
-        # objs = []
-        # for name, func, kwargs in [
-        #     ('GENERAL INFO', self.fetch_general, dict()),
-        #     ('MARKET CAP', self.fetch_market_cap, dict(date=self.td.latest)),
-        #     ('FOREIGN RATE', self.fetch_foreign_rate, dict(date=self.td.latest)),
-        #     ('MARKET TYPE', self.fetch_market_cap_type, dict()),
-        #     ('MARKET RETURN', self.fetch_returns, dict(close=close))
-        # ]:
-        #     _fetch(name, objs, func, **kwargs)
+        close = self.fetch_close(caps=caps)
+        close.to_parquet(PATH.PARQUET.PRICES, engine='pyarrow')
+        objs.append(self("MARKET RETURN", self.fetch_returns, close=close))
 
         try:
             data = pd.concat(objs, axis=1)
@@ -63,6 +53,7 @@ class Market(DataFrameHeir):
         return
 
     def fetch_close(self, caps:DataFrame) -> DataFrame:
+        self.logger(f'>>> [MARKET PRICE]')
         basis = caps.copy()
         close = pd.read_parquet(PATH.PARQUET.PRICES, engine='pyarrow')
 
@@ -71,6 +62,7 @@ class Market(DataFrameHeir):
         r_columns = pd.Index([td.closed] + [td - n for n in SCHEMA.YIELD_DAYS.values()])
 
         if close.columns.equals(r_columns):
+            self.logger(f'>>> | UPDATE LATEST ONLY: {close.columns.tolist()}')
             basis.columns = MultiIndex.from_tuples([(td.closed, c) for c in basis])
             close.update(basis)
             return close
@@ -98,6 +90,7 @@ class Market(DataFrameHeir):
         close: DataFrame = pd.concat(close_objs, axis=1).reindex(times, method='ffill').T
         close.columns = MultiIndex.from_tuples([(td - n, 'close') for n in SCHEMA.YIELD_DAYS.values()])
         data.update(close)
+        self.logger(f'>>> | UPDATE ALL: {close.columns.tolist()}')
         return data
 
     @staticmethod
