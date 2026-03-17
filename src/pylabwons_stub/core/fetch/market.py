@@ -39,7 +39,7 @@ class Market(DataFrameHeir):
             ('MARKET CAP', self.fetch_market_cap, dict(date=self.td.closed)),
             ('FOREIGN RATE', self.fetch_foreign_rate, dict(date=self.td.closed)),
             ('MARKET TYPE', self.fetch_market_cap_type, dict()),
-            ('MARKET RETURN', self.fetch_returns(close), dict(close=close))
+            ('MARKET RETURN', self.fetch_returns, dict(close=close))
         ]:
             _fetch(name, objs, func, **kwargs)
 
