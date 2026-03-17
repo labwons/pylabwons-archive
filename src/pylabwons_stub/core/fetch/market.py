@@ -1,3 +1,4 @@
+from pylabwons_stub.env import PATH
 from pylabwons_stub.schema.dataframe import DataFrameHeir
 from pylabwons_stub.schema import market as SCHEMA
 from pylabwons import TradingDate
@@ -17,68 +18,83 @@ class Market(DataFrameHeir):
         self.td = kwargs.get('td', TradingDate())
         return
 
+    def __call__(self, _name:str, _func, **_kwargs) -> DataFrame:
+        try:
+            self.logger(f'>>> [{_name}]', end=' ... ')
+            df = _func(**_kwargs)
+            self.logger('OK')
+            return df
+        except (KeyError, IndexError, Exception) as _e:
+            self.logger(f'NG: {_e}')
+            raise ConnectionError(f'FETCH FAILED')
     def fetch(self, close: DataFrame = DataFrame()):
-
-        def _fetch(_name: str, _objs, _func, **_kwargs):
-            try:
-                self.logger(f'>>> [{_name}]', end=' ... ')
-                _objs.append(_func(**_kwargs))
-                self.logger('OK')
-            except (KeyError, IndexError, Exception) as _e:
-                self.logger(f'NG: {_e}')
-                raise ConnectionError(f'FETCH FAILED')
-
         tic = time.perf_counter()
-        self.logger(f'FETCH AFTER MARKET DATA ON {self.td.closed}')
-        if close.empty:
-            close = self.fetch_close()
+        lap = self.td.clock('%Y%m%d %H:%M:%S') if self.td.is_open() else f'{self.td.closed} 15:30'
+        self.logger(f'FETCH AFTER MARKET DATA ON {lap}')
 
-        objs = []
-        for name, func, kwargs in [
-            ('GENERAL INFO', self.fetch_general, dict()),
-            ('MARKET CAP', self.fetch_market_cap, dict(date=self.td.closed)),
-            ('FOREIGN RATE', self.fetch_foreign_rate, dict(date=self.td.closed)),
-            ('MARKET TYPE', self.fetch_market_cap_type, dict()),
-            ('MARKET RETURN', self.fetch_returns, dict(close=close))
-        ]:
-            _fetch(name, objs, func, **kwargs)
+        objs = [self("GENERAL INFO", self.fetch_general)]
+        caps = self("MARKET CAP", self.fetch_market_cap, date=self.td.latest)
+        objs.append(caps)
+        objs.append(self("FOREIGN RATE", self.fetch_foreign_rate, date=self.td.latest))
+        objs.append(self("MARKET TYPE", self.fetch_market_cap_type))
+        objs.append(self("MARKET RETURN", self.fetch_returns, caps=caps))
+        # close = pd.read_parquet(PATH.PARQUET.PRICES, engine='pyarrow')
+
+        #
+        # objs = []
+        # for name, func, kwargs in [
+        #     ('GENERAL INFO', self.fetch_general, dict()),
+        #     ('MARKET CAP', self.fetch_market_cap, dict(date=self.td.latest)),
+        #     ('FOREIGN RATE', self.fetch_foreign_rate, dict(date=self.td.latest)),
+        #     ('MARKET TYPE', self.fetch_market_cap_type, dict()),
+        #     ('MARKET RETURN', self.fetch_returns, dict(close=close))
+        # ]:
+        #     _fetch(name, objs, func, **kwargs)
 
         try:
             data = pd.concat(objs, axis=1)
             data = data[data['market'].isin(['kosdaq', 'kospi'])]
-            data['tradingDate'] = str(self.td.closed)
-
+            data['tradingDate'] = str(self.td.latest)
             super().__init__(data)
-            self.logger(f'{"." * 30} {len(self)} STOCKS / RUNTIME: {time.perf_counter() - tic:.2f}s')
         except (KeyError, Exception) as e:
             raise ConnectionError(e)
+
+        self.logger(f'{"." * 30} {len(self)} STOCKS / RUNTIME: {time.perf_counter() - tic:.2f}s')
         return
 
-    def fetch_close(self) -> DataFrame:
+    def fetch_close(self, caps:DataFrame) -> DataFrame:
+        basis = caps.copy()
+        close = pd.read_parquet(PATH.PARQUET.PRICES, engine='pyarrow')
+
         td = TradingDate()
         td.closed = self.td.latest
+        r_columns = pd.Index([td.closed] + [td - n for n in SCHEMA.YIELD_DAYS.values()])
+
+        if close.columns.equals(r_columns):
+            basis.columns = MultiIndex.from_tuples([(td.closed, c) for c in basis])
+            close.update(basis)
+            return close
 
         # 기본 데이터 설정
-        base = self.fetch_market_cap(date=td.closed)
-        base['calc'] = 'close'
+        basis['calc'] = 'close'
 
-        objs = {td.closed: base}
-        for n in SCHEMA.YIELD_DAYS.values():
+        objs = {td.closed: basis}
+        for n in r_columns[1:]:
             objs[td - n] = self.fetch_market_cap(date=td - n)
         data = pd.concat(objs, axis=1)
-        data = data[data.index.isin(base.index) & (data[(td.closed, 'volume')] > 0)]
+        data = data[data.index.isin(basis.index) & (data[(td.closed, 'volume')] > 0)]
 
-        N = list(SCHEMA.YIELD_DAYS.values())[-1]
-        shares = data[(td.closed, 'shares')] / data[(td - N, 'shares')] - 1
+        n_far = list(SCHEMA.YIELD_DAYS.values())[-1]
+        shares = data[(td.closed, 'shares')] / data[(td - n_far, 'shares')] - 1
         shares_diff = shares[shares.abs() >= 0.01].index
-        sized_diff = base[base.index.isin(shares_diff) & (base.marketCap < base.marketCap.median())].index
-        update_diff = base[base.index.isin(shares_diff) & (base.marketCap >= base.marketCap.median())].index
+        sized_diff = basis[basis.index.isin(shares_diff) & (basis.marketCap < basis.marketCap.median())].index
+        update_diff = basis[basis.index.isin(shares_diff) & (basis.marketCap >= basis.marketCap.median())].index
         data.loc[sized_diff, (td.closed, 'calc')] = 'marketCap'
 
         times = [datetime.strptime(td - n, '%Y%m%d') for n in SCHEMA.YIELD_DAYS.values()]
         close_objs = {}
         for ticker in update_diff:
-            close_objs[ticker] = stock.get_market_ohlcv_by_date(fromdate=td - N, todate=td.closed, ticker=ticker)['종가']
+            close_objs[ticker] = stock.get_market_ohlcv_by_date(fromdate=td - n_far, todate=td.closed, ticker=ticker)['종가']
         close: DataFrame = pd.concat(close_objs, axis=1).reindex(times, method='ffill').T
         close.columns = MultiIndex.from_tuples([(td - n, 'close') for n in SCHEMA.YIELD_DAYS.values()])
         data.update(close)
@@ -88,6 +104,14 @@ class Market(DataFrameHeir):
     def fetch_market_cap(date) -> DataFrame:
         data = stock.get_market_cap_by_ticker(date=date, market='ALL').astype('Int64')
         return data.rename(columns=SCHEMA.MARKET_CAP)[SCHEMA.MARKET_CAP.values()]
+
+    @staticmethod
+    def fetch_market_cap_type() -> Series:
+        ks200 = Series(index=stock.get_index_portfolio_deposit_file('2203')).fillna('kospi200')
+        kq150 = Series(index=stock.get_index_portfolio_deposit_file('1028')).fillna('kosdaq150')
+        data = pd.concat([ks200, kq150], axis=0)
+        data.name = 'groupByMarketCap'
+        return data
 
     @staticmethod
     def fetch_foreign_rate(date: str) -> DataFrame:
@@ -105,18 +129,7 @@ class Market(DataFrameHeir):
         return data[SCHEMA.GENERAL.values()]
 
     @staticmethod
-    def fetch_market_cap_type() -> Series:
-        ks200 = Series(index=stock.get_index_portfolio_deposit_file('2203')).fillna('kospi200')
-        kq150 = Series(index=stock.get_index_portfolio_deposit_file('1028')).fillna('kosdaq150')
-        data = pd.concat([ks200, kq150], axis=0)
-        data.name = 'groupByMarketCap'
-        return data
-
-    @property
-    def date(self) -> str:
-        return self['tradingDate'].unique()[0]
-
-    def fetch_returns(self, close: DataFrame) -> DataFrame:
+    def fetch_returns(close: DataFrame) -> DataFrame:
         dates = close.columns.levels[0].unique().sort_values(ascending=False)
         base = close[dates[0]].copy()
 
@@ -130,50 +143,19 @@ class Market(DataFrameHeir):
         by_price = pd.concat({col: (by_price['D0'] - 1) / by_price[col] for col in by_price}, axis=1)
         by_cap = pd.concat({col: (by_cap['D0'] - 1) / by_cap[col] for col in by_cap}, axis=1)
 
-        return pd.concat([by_price, by_cap], axis=0).drop(columns=['D0'])
-        # objs = {'D+0': stock.get_market_cap_by_ticker(date=td.closed, market='ALL')}
-        # for col, n in SCHEMA.YIELD_DAYS.items():
-        #     objs[col] = stock.get_market_cap_by_ticker(date=td - n, market='ALL')
-        # data = pd.concat(objs, axis=1)
-        # base = data[data.index.isin(base.index)]
-        #
-        # # 기본 수익률 계산
-        # returns = pd.concat({dt: base['D+0']['종가'] / base[dt]['종가'] - 1 for dt in objs}, axis=1) \
-        #     .drop(columns=['D+0'])
-        #
-        # # 상장 주식수 변화 감지: -1Y 대비 1% 이상 변화 종목 대상
-        # shares_changed = base['D+0']['상장주식수'] / base['returnOn1Year']['상장주식수'] - 1
-        # diff = shares_changed[shares_changed.abs() >= 0.01].index
-        # diff_new = diff[diff.isin(base[base[('D+0', '시가총액')] >= base[('D+0', '시가총액')].median()].index)]
-        # diff_cap = diff[~diff.isin(diff_new)]
-        #
-        # # 상장 주식수 변화 대상 중 주요 종목은 종가 기준 수익률 재계산
-        # close_objs = {}
-        # for ticker in diff_new:
-        #     close_objs[ticker] = stock.get_market_ohlcv_by_date(fromdate=td - 365, todate=td.closed, ticker=ticker)[
-        #         '종가']
-        # close: DataFrame = pd.concat(close_objs, axis=1)
-        # times = [datetime.strptime(td - n, '%Y%m%d') for n in SCHEMA.YIELD_DAYS.values()]
-        # close = close.reindex(times + [close.index[-1]], method='ffill')
-        # return_by_close = ((close.iloc[-1] / close) - 1).iloc[:-1].T
-        # return_by_close.columns = returns.columns
-        # returns.update(return_by_close)
-        #
-        # # 상장 주식수 변화 대상 중 비 주류 종목은 시가총액 기준 수익률 재계산 (속도 향상 목적)
-        # return_by_cap: DataFrame = pd.concat({
-        #     dt: base['D+0']['시가총액'] / base[dt]['시가총액'] - 1 for dt in objs
-        # }, axis=1)
-        # return_by_cap.drop(columns=['D+0'], inplace=True)
-        # return_by_cap = return_by_cap.loc[diff_cap]
-        # returns.update(return_by_cap)
-        #
-        # return round(100 * returns, 2)
+        return round(100 * pd.concat([by_price, by_cap], axis=0).drop(columns=['D0']), 2)
+
+    @property
+    def date(self) -> str:
+        return self['tradingDate'].unique()[0]
 
 
 
 if __name__ == '__main__':
-    market = Market()
+    # market = Market()
     # market.fetch()
-    print(market)
+    # print(market)
     # print(market.tradingDate)
     # print(market.logger)
+
+    print(pd.read_parquet(PATH.PARQUET.PRICES, engine='pyarrow'))
