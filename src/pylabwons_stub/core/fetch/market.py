@@ -64,7 +64,7 @@ class Market(DataFrameHeir):
         r_columns = [td.closed] + [td - n for n in SCHEMA.YIELD_DAYS.values()]
         c_columns = sorted(close.columns.levels[0].tolist(), reverse=True)
         if r_columns == c_columns:
-            self.logger(f'>>> | UPDATE LATEST ONLY: {c_columns}')
+            self.logger(f'>>> | UPDATE LATEST: {c_columns}')
             basis.columns = MultiIndex.from_tuples([(td.closed, c) for c in basis])
             close.update(basis)
             return close

@@ -3,8 +3,8 @@ from pylabwons_stub.core.build.baseline import Baseline
 from pylabwons_stub.schema.const.baseline import BASELINE
 from pylabwons_stub.schema.const.marketmap import COLORS, MARKETMAP
 from pylabwons_stub.utils import tools
+from datetime import datetime
 from pandas import DataFrame
-from pandas.api.types import is_numeric_dtype
 from jinja2 import Environment, FileSystemLoader
 from json import dumps
 from typing import Callable, Dict, Hashable, List
@@ -18,7 +18,7 @@ class MarketMap(Baseline):
 
     def __init__(self, logger:Callable=print):
         super().__init__(logger)
-        self.logger(f'DEPLOY MARKET MAP ON {self.td.closed}')
+        self.logger(f'DEPLOY MARKET MAP ON {self.log.baseline.date}')
 
         self._extract()
         self._stack(by='industryName')
@@ -199,14 +199,14 @@ class MarketMap(Baseline):
         return self[~self.index.str.startswith('W')]
 
     def deploy(self):
-        date = f'{self.td.closed[:4]}/{self.td.closed[4:6]}/{self.td.closed[6:8]}'
+        date = datetime.strptime(self.log.baseline.date, "%Y%m%d %H:%M")
         with open(file=PATH.HTML.MARKETMAP, mode='w', encoding='utf-8') as file:
             file.write(
                 Environment(loader=FileSystemLoader(PATH.HTML.TEMPLATE)) \
                 .get_template('marketmap-1.0.0.html') \
                 .render({
                     "title": "LAB￦ONS: \uc2dc\uc7a5\uc9c0\ub3c4",
-                    "tradingDate": f'{date}\u0020\uc885\uac00\u0020\uae30\uc900',
+                    "tradingDate": date.strftime("%Y/%m/%d %H:%M"),
                     "statusValue": self.stat.to_dict(),
                     "srcTicker": self.to_json(orient='index'),
                     "srcIndicatorOpt": dumps(self.metadata),
