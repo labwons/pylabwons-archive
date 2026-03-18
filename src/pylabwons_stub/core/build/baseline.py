@@ -4,6 +4,7 @@ from pylabwons_stub.core.fetch.market import Market
 from pylabwons_stub.core.fetch.number import Number
 from pylabwons_stub.core.fetch.sector import Sector
 from pylabwons_stub.env import HOST, PATH, RUNTIME
+from datetime import datetime
 from typing import Callable, List
 import numpy as np
 import pandas as pd
@@ -92,7 +93,10 @@ class Baseline(DataFrameHeir):
         if self.td.is_open():
             tickets.append("market")
         else:
-            if not self.market.date == self.td.closed == self.log.market.date:
+            log_date = datetime \
+                       .strptime(self.log.market.date, "%Y%m%d %H:%M") \
+                       .strftime("%Y%m%d")
+            if not self.market.date == self.td.closed == log_date:
                 tickets.append('market')
 
         if not self.sector.date == self.sector.server_date == self.log.sector.date:
@@ -120,15 +124,19 @@ class Baseline(DataFrameHeir):
     def build(self, *tickets):
         tickets = self.get_tickets(*tickets)
         self.logger(f'[BUILD BASELINE]')
-        self.logger(f'| TRADING DATE: {self.td.closed}')
+        self.logger(f'| TRADING DATE(LATEST): {self.td.latest}')
+        self.logger(f'| TRADING DATE(CLOSED): {self.td.closed}')
         self.logger(f'| TICKETS: {"NO TICKETS" if not tickets else tickets}')
 
         if 'market' in tickets:
-            try:
-                self.log.prices.time = self.td.clock("%Y%m%d %H:%M:%S")
+            try:            
                 self.market.fetch()
                 self.market.to_parquet(PATH.PARQUET.MARKET, engine='pyarrow')
-                self.log.market.date = str(self.market.date)
+                self.log.prices.time = self.market.lap
+                if not self.td.is_open():
+                    self.log.market.date = f"{self.td.closed} 15:30"
+                else:
+                    self.log.market.date = self.market.lap
             except (ConnectionError, IndexError, KeyError, Exception) as e:
                 self.logger(f'>>> FAILED TO BUILD AFTER MARKET: {e}')
 
@@ -152,10 +160,10 @@ class Baseline(DataFrameHeir):
         if tickets or (HOST == 'github_action' and RUNTIME == 'workflow_dispatch'):
             self._capture_baseline(self.sector, self.market, self.number)
             self.to_parquet(PATH.PARQUET.BASELINE, engine='pyarrow')
-            self.to_parquet(PATH.LOG / f'baseline-{self.td.closed}.parquet', engine='pyarrow')
+            self.to_parquet(PATH.LOG / f'baseline-{self.td.latest}.parquet', engine='pyarrow')
             self.to_csv(PATH.CSV.BASELINE, encoding='utf-8', index=True)
 
-            self.log.baseline.date = self.td.closed
+            self.log.baseline.date = self.log.market.date
             if len(os.listdir(PATH.LOG)) > 20:
                 logs = os.listdir(PATH.LOG)
                 logs.sort()

@@ -10,12 +10,14 @@ import requests, io, time
 
 
 class Market(DataFrameHeir):
-    _metadata = ['logger', 'td']
+    _metadata = ['lap', 'logger', 'td']
 
     def __init__(self, src: str = SCHEMA.MARKET, **kwargs):
         super().__init__(src, **kwargs)
+        
         self.logger = kwargs.get('logger', print)
         self.td = kwargs.get('td', TradingDate())
+        self.lap = self.td.clock("%Y%m%d %H:%M")
         return
 
     def __call__(self, _name:str, _func, **_kwargs) -> DataFrame:
@@ -27,10 +29,11 @@ class Market(DataFrameHeir):
         except (KeyError, IndexError, Exception) as _e:
             self.logger(f'NG: {_e}')
             raise ConnectionError(f'FETCH FAILED')
+
     def fetch(self):
         tic = time.perf_counter()
-        lap = self.td.clock('%Y%m%d %H:%M:%S') if self.td.is_open() else f'{self.td.closed} 15:30'
-        self.logger(f'FETCH AFTER MARKET DATA ON {lap}')
+        self.lap = self.td.clock('%Y%m%d %H:%M') if self.td.is_open() else f'{self.td.closed} 15:30'
+        self.logger(f'FETCH MARKET DATA ON {self.lap}')
 
         caps = self("MARKET CAP", self.fetch_market_cap, date=self.td.latest)
         objs = [self("GENERAL INFO", self.fetch_general), caps,
@@ -38,7 +41,6 @@ class Market(DataFrameHeir):
                 self("MARKET TYPE", self.fetch_market_cap_type)]
 
         close = self.fetch_close(caps=caps)
-        close.to_parquet(PATH.PARQUET.PRICES, engine='pyarrow')
         objs.append(self("MARKET RETURN", self.fetch_returns, close=close))
 
         try:
@@ -59,10 +61,10 @@ class Market(DataFrameHeir):
 
         td = TradingDate()
         td.closed = self.td.latest
-        r_columns = pd.Index([td.closed] + [td - n for n in SCHEMA.YIELD_DAYS.values()])
-
-        if close.columns.equals(r_columns):
-            self.logger(f'>>> | UPDATE LATEST ONLY: {close.columns.tolist()}')
+        r_columns = [td.closed] + [td - n for n in SCHEMA.YIELD_DAYS.values()]
+        c_columns = sorted(close.columns.levels[0].tolist(), reverse=True)
+        if r_columns == c_columns:
+            self.logger(f'>>> | UPDATE LATEST ONLY: {c_columns}')
             basis.columns = MultiIndex.from_tuples([(td.closed, c) for c in basis])
             close.update(basis)
             return close
@@ -71,8 +73,8 @@ class Market(DataFrameHeir):
         basis['calc'] = 'close'
 
         objs = {td.closed: basis}
-        for n in r_columns[1:]:
-            objs[td - n] = self.fetch_market_cap(date=td - n)
+        for dt in r_columns[1:]:
+            objs[dt] = self.fetch_market_cap(date=dt)
         data = pd.concat(objs, axis=1)
         data = data[data.index.isin(basis.index) & (data[(td.closed, 'volume')] > 0)]
 
@@ -90,7 +92,8 @@ class Market(DataFrameHeir):
         close: DataFrame = pd.concat(close_objs, axis=1).reindex(times, method='ffill').T
         close.columns = MultiIndex.from_tuples([(td - n, 'close') for n in SCHEMA.YIELD_DAYS.values()])
         data.update(close)
-        self.logger(f'>>> | UPDATE ALL: {close.columns.tolist()}')
+        data.to_parquet(PATH.PARQUET.PRICES, engine='pyarrow')
+        self.logger(f'>>> | UPDATE ALL: {data.columns.levels[0].tolist()}')
         return data
 
     @staticmethod
