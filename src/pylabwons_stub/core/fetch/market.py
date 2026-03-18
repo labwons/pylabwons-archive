@@ -132,13 +132,12 @@ class Market(DataFrameHeir):
         by_price = pd.concat({date: close[(date, 'close')] for date in dates}, axis=1) \
                    .rename(columns=dict(zip(dates, ['D0'] + list(SCHEMA.YIELD_DAYS.keys()))))
         by_price = by_price[by_price.index.isin(base[base['calc'] == 'close'].index)]
+        by_price = pd.concat({col: (by_price['D0'] / by_price[col] - 1) for col in by_price}, axis=1)
+
         by_cap = pd.concat({date: close[(date, 'marketCap')] for date in dates}, axis=1) \
                  .rename(columns=dict(zip(dates, ['D0'] + list(SCHEMA.YIELD_DAYS.keys()))))
         by_cap = by_cap[by_cap.index.isin(base[base['calc'] == 'marketCap'].index)]
-
-        by_price = pd.concat({col: (by_price['D0'] - 1) / by_price[col] for col in by_price}, axis=1)
-        by_cap = pd.concat({col: (by_cap['D0'] - 1) / by_cap[col] for col in by_cap}, axis=1)
-
+        by_cap = pd.concat({col: (by_cap['D0'] / by_cap[col] - 1) for col in by_cap}, axis=1)
         return round(100 * pd.concat([by_price, by_cap], axis=0).drop(columns=['D0']), 2)
 
     @property
@@ -148,10 +147,11 @@ class Market(DataFrameHeir):
 
 
 if __name__ == '__main__':
-    # market = Market()
+    market = Market()
     # market.fetch()
     # print(market)
     # print(market.tradingDate)
     # print(market.logger)
 
-    print(pd.read_parquet(PATH.PARQUET.PRICES, engine='pyarrow'))
+    close = pd.read_parquet(PATH.PARQUET.PRICES, engine='pyarrow')
+    print(market.fetch_returns(close))

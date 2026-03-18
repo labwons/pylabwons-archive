@@ -41,7 +41,7 @@ class Baseline(DataFrameHeir):
         return
 
     def _capture_baseline(self, *args):
-        self.logger(f'CAPTURE NEW BASELINE ON {self.td.closed}')
+        self.logger(f'CAPTURE NEW BASELINE ON {self.log.baseline.date}')
         super().__init__(*args, method='join')
 
         self._typecast()
