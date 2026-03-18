@@ -93,10 +93,9 @@ class Baseline(DataFrameHeir):
         if self.td.is_open():
             tickets.append("market")
         else:
-            log_date = datetime \
-                       .strptime(self.log.market.date, "%Y%m%d %H:%M") \
-                       .strftime("%Y%m%d")
-            if not self.market.date == self.td.closed == log_date:
+            if not ((self.market.data == self.td.latest) and
+                self.log.market.date.endswith("15:30") and
+                self.log.prices.time.endswith("15:30")):
                 tickets.append('market')
 
         if not self.sector.date == self.sector.server_date == self.log.sector.date:
