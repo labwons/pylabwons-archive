@@ -107,10 +107,6 @@ class Baseline(DataFrameHeir):
                 tickets.append('number')
 
         if HOST == 'github_action':
-            if RUNTIME == 'schedule':
-                if not self.td.closed == self.td.clock('%Y%m%d'):
-                    return []
-
             if self.td.is_open() or int(self.td.clock().hour) < 19:
                 if 'sector' in tickets:
                     tickets.remove('sector')

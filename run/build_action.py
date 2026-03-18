@@ -10,7 +10,8 @@ if __name__ == "__main__":
     logger = lw.Logger(console=True)
     logger(f'RUNS ON {lws.HOST.upper()} / {lws.RUNTIME.upper()} @{os.environ.get("TIMESTAMP", "*")}')
     baseline = lws.Baseline(logger=logger)
-    baseline.number.progress_bar = False
+    if lws.HOST == 'github_action':
+        baseline.number.progress_bar = False
     baseline.build()
 
     market_map = lws.MarketMap(logger=logger)
