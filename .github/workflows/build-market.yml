@@ -5,8 +5,12 @@ name: BUILD LABWONS
 
 on:
   schedule:
-    - cron: '31 6 * * 1-5' # KST 3:31 PM
-    - cron: '0 12 * * 1-5' # KST 9:00 PM
+    # 1. KST 9:00AM ~ 2:45PM (UTC 00:00 ~ 05:45) EVERY 15MIN.
+    - cron: '0,15,30,45 0-5 * * 1-5'
+    # 2. KST 3:00 ~ 3:30PM (UTC 06:00 ~ 06:30) EVERY 15MIN.
+    - cron: '0,15,30 6 * * 1-5'
+    # 3. KST 9:00PM
+    - cron: '0 12 * * 1-5'
   workflow_dispatch:
 
 permissions:
