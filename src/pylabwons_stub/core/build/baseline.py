@@ -93,7 +93,7 @@ class Baseline(DataFrameHeir):
         if self.td.is_open():
             tickets.append("market")
         else:
-            if not ((self.market.data == self.td.latest) and
+            if not ((self.market.date == self.td.latest) and
                 self.log.market.date.endswith("15:30") and
                 self.log.prices.time.endswith("15:30")):
                 tickets.append('market')
