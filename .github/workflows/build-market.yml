@@ -7,8 +7,8 @@ on:
   schedule:
     # KST 09:00AM ~ 15:45PM (UTC 00:00 ~ 06:45) EVERY 15MIN. MON. THROUGH FRI.
     - cron: '*/15 0-6 * * 1-5'
-    # KST 9:00PM
-    - cron: '0 12 * * 1-5'
+    # KST 6:00AM
+    - cron: '0 21 * * 1-5'
   workflow_dispatch:
 
 permissions:

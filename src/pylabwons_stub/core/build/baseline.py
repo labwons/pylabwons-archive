@@ -106,7 +106,7 @@ class Baseline(DataFrameHeir):
                 tickets.append('number')
 
         if HOST == 'github_action':
-            if self.td.clock().hour < 20:
+            if 8 <= self.td.clock().hour < 20:
                 if 'sector' in tickets:
                     tickets.remove('sector')
                 if 'number' in tickets:
@@ -124,11 +124,7 @@ class Baseline(DataFrameHeir):
             try:            
                 self.market.fetch()
                 self.market.to_parquet(PATH.PARQUET.MARKET, engine='pyarrow')
-                self.log.prices.time = self.market.lap
-                if not self.td.is_open():
-                    self.log.market.date = f"{self.td.closed} 15:30"
-                else:
-                    self.log.market.date = self.market.lap
+                self.log.prices.time = self.log.market.date = self.market.lap
             except (ConnectionError, IndexError, KeyError, Exception) as e:
                 self.logger(f'>>> FAILED TO BUILD AFTER MARKET: {e}')
 
