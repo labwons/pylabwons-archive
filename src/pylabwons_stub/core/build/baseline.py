@@ -106,14 +106,11 @@ class Baseline(DataFrameHeir):
                 tickets.append('number')
 
         if HOST == 'github_action':
-            if self.td.is_open() or int(self.td.clock().hour) < 19:
+            if self.td.clock().hour < 20:
                 if 'sector' in tickets:
                     tickets.remove('sector')
                 if 'number' in tickets:
                     tickets.remove('number')
-            if not self.td.is_open() and int(self.td.clock().hour) >= 17:
-                if 'market' in tickets:
-                    tickets.remove('market')
         return tickets
 
     def build(self, *tickets):
