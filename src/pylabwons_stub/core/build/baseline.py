@@ -4,7 +4,6 @@ from pylabwons_stub.core.fetch.market import Market
 from pylabwons_stub.core.fetch.number import Number
 from pylabwons_stub.core.fetch.sector import Sector
 from pylabwons_stub.env import HOST, PATH, RUNTIME
-from datetime import datetime
 from typing import Callable, List
 import numpy as np
 import pandas as pd
@@ -90,8 +89,11 @@ class Baseline(DataFrameHeir):
             return []
 
         tickets = []
-        if not self.market.date == self.td.closed == self.log.market.date:
-            tickets.append('market')
+        if self.td.is_open():
+            tickets.append("market")
+        else:
+            if not self.market.date == self.td.closed == self.log.market.date:
+                tickets.append('market')
 
         if not self.sector.date == self.sector.server_date == self.log.sector.date:
             tickets.append('sector')
@@ -105,15 +107,12 @@ class Baseline(DataFrameHeir):
                 if not self.td.closed == self.td.clock('%Y%m%d'):
                     return []
 
-                while self.td.is_open():
-                    time.sleep(30)
-
-            if 9 <= self.td.clock().hour < 19:
+            if self.td.is_open() or int(self.td.clock().hour) < 19:
                 if 'sector' in tickets:
                     tickets.remove('sector')
                 if 'number' in tickets:
                     tickets.remove('number')
-            else:
+            if not self.td.is_open() and int(self.td.clock().hour) >= 17:
                 if 'market' in tickets:
                     tickets.remove('market')
         return tickets
@@ -178,9 +177,10 @@ class Baseline(DataFrameHeir):
 
 if __name__ == "__main__":
     baseline = Baseline()
+    print(baseline.market.date)
     # print(baseline)
     # print(baseline.columns)
-    baseline.build('market')
+    # baseline.build()
     # baseline.to_excel(PATH.DOWNLOADS / 'baseline.xlsx')
     # baseline.market.to_excel(PATH.DOWNLOADS / 'market.xlsx')
     # baseline.number.to_excel(PATH.DOWNLOADS / 'number.xlsx')
