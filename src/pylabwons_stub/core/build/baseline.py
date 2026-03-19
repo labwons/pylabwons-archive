@@ -173,10 +173,7 @@ class Baseline(DataFrameHeir):
             self.logger(f'>>> {key}: {value}')
         return
 
-    def release(self, path:Union[str, Path]=''):
-        if not path:
-            path = PATH.DOWNLOADS
-
+    def release(self, path:Union[str, Path]):
         # 데이터 전처리
         drop = ['market', 'shares', 'foreignSharesLimit', 'foreignRateByLimit' ,
                 'estimation', 'nOfEstimations',
@@ -221,11 +218,10 @@ class Baseline(DataFrameHeir):
             columns.append((level0, level1))
 
         # 엑셀 파일에 쓰기
-        filename = Path(path) / f'baseline.xlsx'
         time = datetime.strptime(self.log.baseline.date, "%Y%m%d %H:%M")
         name = time.strftime("%Y년%m월%d일 %H시%M분 기준")
 
-        wb = xlsxwriter.Workbook(filename)
+        wb = xlsxwriter.Workbook(path)
         ws = wb.add_worksheet(name)
 
         # 서식
@@ -279,6 +275,7 @@ class Baseline(DataFrameHeir):
         switch = {'':'basic', '4분기 합산': 'trailing', '전년 동기 대비': 'yoy',
                   '직전 결산 기준': 'fiscal', '추정치': 'estimate', '기타':'etc'}
 
+        # 헤더(열 이름) 삽입
         l0_base = columns[0][0]
         for n_col, (l0, l1) in enumerate(columns, start=1):
             _style = style.head[switch[l0]]
@@ -293,9 +290,11 @@ class Baseline(DataFrameHeir):
             if n_col == 1:
                 ws.write(1, 0, '종목코드', _style)
 
+        # 인덱스(종목 코드) 삽입
         for n_row, ticker in enumerate(copy.index, start=2):
             ws.write(n_row, 0, ticker, style.cell.basic)
 
+        # 개별 데이터 삽입
         for n_row, row in enumerate(copy.itertuples(index=False), start=2):
             for n_col, col in enumerate(row, start=1):
                 _style = style.cell.basic
@@ -311,22 +310,16 @@ class Baseline(DataFrameHeir):
                 except (ValueError, TypeError, Exception):
                     ws.write(n_row, n_col, '', _style)
 
+        # 열 너비 설정
+        for n_col, col in enumerate(copy.columns, start=1):
+            if col.startswith('KRX'):
+                continue
+            width = copy[col].apply(lambda x: len(str(x))).max()
+            ws.set_column(n_col, n_col, width + 2)
+
+        # 틀 고정
+        ws.freeze_panes(2, 2)
         wb.close()
-        # with pd.ExcelWriter(filename, engine='xlsxwriter') as writer:
-        #     name = time.strftime("%Y년%m월%d일 %H시%M분 기준")
-        #     copy.to_excel(writer, sheet_name=name)
-        #
-        #     wb = writer.book
-        #     ws = writer.sheets[name]
-        #
-        #     font_data = wb.add_format({'font_size': 8, 'align': 'center', 'valign': 'vcenter' })
-        #     for row in range(2, 2 + len(copy)):
-        #         for col in range(1, 1 + len(copy.columns)):
-        #             data = copy.iloc[row - 2, col - 1]
-        #             try:
-        #                 ws.write(row, col, data, font_data)
-        #             except (Exception, TypeError):
-        #                 ws.write(row, col, '', font_data)
         return
 
 
@@ -336,7 +329,7 @@ if __name__ == "__main__":
     # print(baseline)
     # print(baseline.columns)
     # baseline.build()
-    baseline.release()
+    baseline.release(PATH.DOWNLOADS / f'BASELINE.xlsx')
     # baseline.market.to_excel(PATH.DOWNLOADS / 'market.xlsx')
     # baseline.number.to_excel(PATH.DOWNLOADS / 'number.xlsx')
     # baseline.sector.to_excel(PATH.DOWNLOADS / 'sector.xlsx')
