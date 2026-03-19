@@ -14,6 +14,30 @@ BASELINE = SCHEMA = lw.DataDictionary(
         data_type=str,
         round=0,
     ),
+    industryCode=lw.DataDictionary(
+        kor_name='업종코드',
+        unit='',
+        data_type=str,
+        round=0,
+    ),
+    industryName=lw.DataDictionary(
+        kor_name='업종분류',
+        unit='',
+        data_type=str,
+        round=0,
+    ),
+    sectorCode=lw.DataDictionary(
+        kor_name='섹터코드',
+        unit='',
+        data_type=str,
+        round=0,
+    ),
+    sectorName=lw.DataDictionary(
+        kor_name='섹터분류',
+        unit='',
+        data_type=str,
+        round=0,
+    ),
     tradingDate=lw.DataDictionary(
         kor_name='거래일',
         unit='',
@@ -167,8 +191,8 @@ BASELINE = SCHEMA = lw.DataDictionary(
         round=0,
     ),
     fiscalMonth=lw.DataDictionary(
-        kor_name='실적 기준일(년)',
-        unit='',
+        kor_name='확정 실적 기준',
+        unit='년/월',
         data_type=str,
         round=0,
     ),
@@ -180,43 +204,43 @@ BASELINE = SCHEMA = lw.DataDictionary(
     ),
 
     trailingRevenue=lw.DataDictionary(
-        kor_name='매출(4분기연속)',
+        kor_name='매출(4분기 합산)',
         unit='억원',
         data_type=int,
         round=0,
     ),
     trailingProfit=lw.DataDictionary(
-        kor_name='영업이익(4분기연속)',
+        kor_name='영업이익(4분기 합산)',
         unit='억원',
         data_type=int,
         round=0,
     ),
     trailingNetProfit=lw.DataDictionary(
-        kor_name='당기순이익(4분기연속)',
+        kor_name='당기순이익(4분기 합산)',
         unit='억원',
         data_type=int,
         round=0,
     ),
     trailingProfitRate=lw.DataDictionary(
-        kor_name='영업이익률(4분기연속)',
+        kor_name='영업이익률(4분기 합산)',
         unit='%',
         data_type=float,
         round=2,
     ),
     trailingEps=lw.DataDictionary(
-        kor_name='EPS(4분기연속)',
+        kor_name='EPS(4분기 합산)',
         unit='원',
         data_type=float,
         round=2,
     ),
     trailingPs=lw.DataDictionary(
-        kor_name='PSR(4분기연속)',
+        kor_name='PSR(4분기 합산)',
         unit='',
         data_type=float,
         round=2,
     ),
     trailingPe=lw.DataDictionary(
-        kor_name='PER(4분기연속)',
+        kor_name='PER(4분기 합산)',
         unit='',
         data_type=float,
         round=2,
@@ -247,7 +271,7 @@ BASELINE = SCHEMA = lw.DataDictionary(
         round=2,
     ),
     yoyEps=lw.DataDictionary(
-        kor_name='Eps(전년 동기 대비)',
+        kor_name='EPS(전년 동기 대비)',
         unit='%',
         data_type=str,
         round=2,
@@ -409,19 +433,6 @@ BASELINE = SCHEMA = lw.DataDictionary(
         data_type=float,
         round=2,
     ),
-
-    forwardEps=lw.DataDictionary(
-        kor_name='EPS(12개월선행)',
-        unit='원',
-        data_type=float,
-        round=2,
-    ),
-    forwardPe=lw.DataDictionary(
-        kor_name='PER(12개월선행)',
-        unit='',
-        data_type=float,
-        round=2,
-    ),
     estimation=lw.DataDictionary(
         kor_name='컨센서스',
         unit='',
@@ -429,7 +440,7 @@ BASELINE = SCHEMA = lw.DataDictionary(
         round=2,
     ),
     estimatedMonth=lw.DataDictionary(
-        kor_name='컨센서스기준일',
+        kor_name='추정 기준일',
         unit='',
         data_type=str,
         round=2,
@@ -532,6 +543,12 @@ BASELINE = SCHEMA = lw.DataDictionary(
         data_type=float,
         round=2,
     ),
+    forwardEps=lw.DataDictionary(
+        kor_name='EPS(12개월선행)',
+        unit='원',
+        data_type=float,
+        round=2,
+    ),
     estimatedEpsGrowth=lw.DataDictionary(
         kor_name='EPS성장률(추정)',
         unit='%',
@@ -540,6 +557,12 @@ BASELINE = SCHEMA = lw.DataDictionary(
     ),
     estimatedPe=lw.DataDictionary(
         kor_name='PER(추정)',
+        unit='',
+        data_type=float,
+        round=2,
+    ),
+    forwardPe=lw.DataDictionary(
+        kor_name='PER(12개월선행)',
         unit='',
         data_type=float,
         round=2,
@@ -577,30 +600,6 @@ BASELINE = SCHEMA = lw.DataDictionary(
     ),
     groupByMarketCap=lw.DataDictionary(
         kor_name='추종지수(대형주)',
-        unit='',
-        data_type=str,
-        round=0,
-    ),
-    industryCode=lw.DataDictionary(
-        kor_name='업종코드',
-        unit='',
-        data_type=str,
-        round=0,
-    ),
-    industryName=lw.DataDictionary(
-        kor_name='업종분류',
-        unit='',
-        data_type=str,
-        round=0,
-    ),
-    sectorCode=lw.DataDictionary(
-        kor_name='섹터코드',
-        unit='',
-        data_type=str,
-        round=0,
-    ),
-    sectorName=lw.DataDictionary(
-        kor_name='섹터분류',
         unit='',
         data_type=str,
         round=0,

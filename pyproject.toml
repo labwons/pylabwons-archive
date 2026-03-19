@@ -15,7 +15,8 @@ dependencies = [
     "pykrx",
     "requests",
     "tqdm",
-    "urllib3"
+    "urllib3",
+    "xlsxwriter"
 ]
 
 [tool.setuptools.packages.find]

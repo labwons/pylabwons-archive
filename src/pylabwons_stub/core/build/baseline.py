@@ -1,3 +1,5 @@
+import xlsxwriter
+
 from pylabwons_stub.schema.dataframe import DataFrameHeir
 from pylabwons_stub.schema.const.baseline import BASELINE
 from pylabwons_stub.core.fetch.market import Market
@@ -5,11 +7,12 @@ from pylabwons_stub.core.fetch.number import Number
 from pylabwons_stub.core.fetch.sector import Sector
 from pylabwons_stub.env import HOST, PATH, RUNTIME
 from datetime import datetime
-from typing import Callable, List
+from pathlib import Path
+from typing import Callable, List, Union
 import numpy as np
 import pandas as pd
 import pylabwons as lw
-import json, os, time
+import json, os
 pd.set_option('display.expand_frame_repr', False)
 pd.set_option('future.no_silent_downcasting', True)
 
@@ -41,7 +44,7 @@ class Baseline(DataFrameHeir):
         return
 
     def _capture_baseline(self, *args):
-        self.logger(f'CAPTURE NEW BASELINE ON {self.log.baseline.date}')
+        self.logger(f'CAPTURE NEW BASELINE ON {self.log.market.date}')
         super().__init__(*args, method='join')
 
         self._typecast()
@@ -54,6 +57,7 @@ class Baseline(DataFrameHeir):
         self['forwardPe'] = round(self['close'] / self['forwardEps'], 2)
         self['trailingPe'] = round(self['close'] / self['trailingEps'], 2)
         self['trailingPs'] = round((self['marketCap'] / 1e+8) / self['trailingRevenue'], 2)
+        self['yoyRevenue'] = self['yoyRevenue'].fillna('미제공')
         self.sort_values(by='marketCap', ascending=False, inplace=True)
 
         super().__init__(self[BASELINE.keys()])
@@ -115,9 +119,9 @@ class Baseline(DataFrameHeir):
 
     def build(self, *tickets):
         tickets = self.get_tickets(*tickets)
+        status = "OPEN" if self.td.is_open() else "CLOSED"
         self.logger(f'[BUILD BASELINE]')
-        self.logger(f'| TRADING DATE(LATEST): {self.td.latest}')
-        self.logger(f'| TRADING DATE(CLOSED): {self.td.closed}')
+        self.logger(f'| TRADING DATE: {self.td.latest} ({status})')
         self.logger(f'| TICKETS: {"NO TICKETS" if not tickets else tickets}')
 
         if 'market' in tickets:
@@ -169,15 +173,170 @@ class Baseline(DataFrameHeir):
             self.logger(f'>>> {key}: {value}')
         return
 
+    def release(self, path:Union[str, Path]=''):
+        if not path:
+            path = PATH.DOWNLOADS
+
+        # 데이터 전처리
+        drop = ['market', 'shares', 'foreignSharesLimit', 'foreignRateByLimit' ,
+                'estimation', 'nOfEstimations',
+                'groupByMarketCap', 'wicsDate', 'industryCode', 'sectorCode']
+
+        copy = self.copy()
+        copy['name'] = copy[['name', 'market']].apply(lambda r: f'{r[0]}*' if r[1] == 'kosdaq' else r[0], axis=1, raw=True)
+        copy.marketCap = (copy.marketCap / 1e+8).astype(int)
+        copy.ifrsType = copy.ifrsType.apply(lambda x: "연결" if x == "D" else "별도")
+        copy.drop(columns=drop, inplace=True)
+
+        # 열(지표) 이름 처리
+        columns = []
+        for k, v in BASELINE.items():
+            if k in drop:
+                continue
+
+            level0 = ''
+            level1 = v.kor_name
+            if '(' in v.kor_name and ')' in v.kor_name:
+                level0 = v.kor_name.split('(')[-1][:-1]
+                level1 = level1.replace(f"({level0})", "")
+
+            if level0 == "직전결산연도":
+                level0 = "직전 결산 기준"
+            if "목표" in level1 or "추정" in level1 or level0 == "12개월선행":
+                if level0 == "12개월선행":
+                    level1 = f"{level1}(12개월선행)"
+                level0 = "추정"
+            if level1 in ['KRX업종분류', 'KRX업종PER', '주요제품', '상장일', '베타']:
+                level0 = '기타'
+            if level0 == "추정":
+                level0 = "추정치"
+
+            if v.unit:
+                if k == 'marketCap':
+                    level1 = f'{level1}(억원)'
+                else:
+                    level1 = f'{level1}({v.unit})'
+            if level1 == "추정 기준일":
+                level1 = "기준일"
+            columns.append((level0, level1))
+
+        # 엑셀 파일에 쓰기
+        filename = Path(path) / f'baseline.xlsx'
+        time = datetime.strptime(self.log.baseline.date, "%Y%m%d %H:%M")
+        name = time.strftime("%Y년%m월%d일 %H시%M분 기준")
+
+        wb = xlsxwriter.Workbook(filename)
+        ws = wb.add_worksheet(name)
+
+        # 서식
+        style = lw.DataDict(
+            head = lw.DataDict(
+                basic=wb.add_format({
+                    'font_size': 8, 'bold': True,
+                    'align': 'center', 'valign':'vcenter',
+                    'bg_color': '#D9D9D9'
+                }),
+                trailing=wb.add_format({
+                    'font_size': 8, 'bold': True,
+                    'align': 'center', 'valign':'vcenter',
+                    'bg_color': '#83CCEB'
+                }),
+                yoy=wb.add_format({
+                    'font_size': 8, 'bold': True,
+                    'align': 'center', 'valign': 'vcenter',
+                    'bg_color': '#94DCF8'
+                }),
+                fiscal=wb.add_format({
+                    'font_size': 8, 'bold': True,
+                    'align': 'center', 'valign': 'vcenter',
+                    'bg_color': '#F7C7AC'
+                }),
+                estimate=wb.add_format({
+                    'font_size': 8, 'bold': True,
+                    'align': 'center', 'valign': 'vcenter',
+                    'bg_color': '#B5E6A2'
+                }),
+                etc=wb.add_format({
+                    'font_size': 8, 'bold': True,
+                    'align': 'center', 'valign': 'vcenter',
+                    'bg_color': '#D9D9D9'
+                }),
+
+            ),
+            cell=lw.DataDict(
+                basic=wb.add_format({
+                    'font_size': 8, 'bold': False,
+                    'align': 'center', 'valign': 'vcenter'
+                }),
+                integer=wb.add_format({
+                    'font_size': 8, 'bold': False,
+                    'align': 'center', 'valign': 'vcenter',
+                    'num_format': '#,##0'
+                }),
+            )
+        )
+
+        switch = {'':'basic', '4분기 합산': 'trailing', '전년 동기 대비': 'yoy',
+                  '직전 결산 기준': 'fiscal', '추정치': 'estimate', '기타':'etc'}
+
+        l0_base = columns[0][0]
+        for n_col, (l0, l1) in enumerate(columns, start=1):
+            _style = style.head[switch[l0]]
+            if l0 != l0_base:
+                ws.write(0, n_col, l0, _style)
+                l0_base = l0
+            else:
+                ws.write(0, n_col, '', _style)
+                if n_col == 1:
+                    ws.write(0, 0, '', _style)
+            ws.write(1, n_col, l1, _style)
+            if n_col == 1:
+                ws.write(1, 0, '종목코드', _style)
+
+        for n_row, ticker in enumerate(copy.index, start=2):
+            ws.write(n_row, 0, ticker, style.cell.basic)
+
+        for n_row, row in enumerate(copy.itertuples(index=False), start=2):
+            for n_col, col in enumerate(row, start=1):
+                _style = style.cell.basic
+                if ('int' in str(type(col)).lower()) and (not columns[n_col - 1][1].endswith('일')):
+                    _style = style.cell.integer
+                if type(col) == str:
+                    try:
+                        col = float(col)
+                    except (ValueError, TypeError, Exception):
+                        pass
+                try:
+                    ws.write(n_row, n_col, col, _style)
+                except (ValueError, TypeError, Exception):
+                    ws.write(n_row, n_col, '', _style)
+
+        wb.close()
+        # with pd.ExcelWriter(filename, engine='xlsxwriter') as writer:
+        #     name = time.strftime("%Y년%m월%d일 %H시%M분 기준")
+        #     copy.to_excel(writer, sheet_name=name)
+        #
+        #     wb = writer.book
+        #     ws = writer.sheets[name]
+        #
+        #     font_data = wb.add_format({'font_size': 8, 'align': 'center', 'valign': 'vcenter' })
+        #     for row in range(2, 2 + len(copy)):
+        #         for col in range(1, 1 + len(copy.columns)):
+        #             data = copy.iloc[row - 2, col - 1]
+        #             try:
+        #                 ws.write(row, col, data, font_data)
+        #             except (Exception, TypeError):
+        #                 ws.write(row, col, '', font_data)
+        return
 
 
 if __name__ == "__main__":
     baseline = Baseline()
-    print(baseline.market.date)
+    # print(baseline.market.date)
     # print(baseline)
     # print(baseline.columns)
     # baseline.build()
-    # baseline.to_excel(PATH.DOWNLOADS / 'baseline.xlsx')
+    baseline.release()
     # baseline.market.to_excel(PATH.DOWNLOADS / 'market.xlsx')
     # baseline.number.to_excel(PATH.DOWNLOADS / 'number.xlsx')
     # baseline.sector.to_excel(PATH.DOWNLOADS / 'sector.xlsx')
