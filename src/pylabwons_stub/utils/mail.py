@@ -85,11 +85,8 @@ class Mailing:
     def send(self):
         conf = self._config.copy()
         conf['to'] = []
-        print(type(conf))
         for name, email in self.to.items():
             conf['to'] = [{"email": email}]
-            # for key, val in conf.items():
-            #     print(key, val)
             smtp = sib_api_v3_sdk.SendSmtpEmail(**conf)
 
             try:
