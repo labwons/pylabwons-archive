@@ -14,6 +14,7 @@ dependencies = [
     "pylabwons",
     "pykrx",
     "requests",
+    "sib-api-v3-sdk",
     "tqdm",
     "urllib3",
     "xlsxwriter"
