@@ -50,6 +50,7 @@ jobs:
       env:
         KRX_ID: ${{ secrets.KRX_ID }}
         KRX_PW: ${{ secrets.KRX_PW }}
+        BREVO : ${{ secrets.BREVO }}
       run: |
         python run/build_action.py    
 

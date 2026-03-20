@@ -17,3 +17,17 @@ if __name__ == "__main__":
     market_map = lws.MarketMap(logger=logger)
     market_map.deploy()
 
+    if baseline.log.baseline.date.endswith("15:30") and baseline.td.clock().hour <= 18:
+        if not 'BREVO' in os.environ:
+            raise SystemExit
+        mail = lws.Mailing(api=os.environ['BREVO'], logger=logger)
+        mail.subject = f'[{mail.ID}] {baseline.log.baseline.date} 시장 정보'
+        mail.content = f"""
+        <h2>기준 일자</h2>
+        <p>- 기본 정보 수집일: {baseline.log.market.date}</p>
+        <p>- 재무 정보 수집일: {baseline.log.number.date}</p>
+        <p>- 업종 정보 수집일: {baseline.log.sector.date}</p>
+        """
+        mail.attach(filepath)
+        mail.send()
+
