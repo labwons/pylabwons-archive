@@ -64,10 +64,9 @@ class Number(DataFrameHeir):
 
     @property
     def date(self) -> str:
-        return str(int(self['numbersDate'].unique()[0]))
+        return str(int(self.loc['005930', 'numbersDate']))
 
 
 if __name__ == '__main__':
     numbers = Number()
-    print(numbers['numbersDate'].unique()[0])
     print(numbers.date)
