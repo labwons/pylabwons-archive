@@ -17,7 +17,7 @@ class Number(DataFrameHeir):
         self.progress_bar:bool = kwargs.get('progress_bar', True)
         try:
             self.server_date = FnGuide('005930').date
-        except (ConnectionError, IndexError):
+        except (ConnectionError, IndexError, ValueError, Exception):
             self.server_date = 'failed'
         return
 
@@ -69,4 +69,5 @@ class Number(DataFrameHeir):
 
 if __name__ == '__main__':
     numbers = Number()
+    print(numbers['numbersDate'].unique()[0])
     print(numbers.date)
