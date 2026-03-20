@@ -308,7 +308,7 @@ BASELINE = SCHEMA = lw.DataDictionary(
         round=2,
     ),
     fiscalProfitRateGrowth=lw.DataDictionary(
-        kor_name='영업이익률성장률(직전결산연도)',
+        kor_name='영업이익률 성장률(직전결산연도)',
         unit='%',
         data_type=str,
         round=2,
@@ -495,7 +495,7 @@ BASELINE = SCHEMA = lw.DataDictionary(
         round=2,
     ),
     estimatedProfitRateGrowth=lw.DataDictionary(
-        kor_name='영업이익률성장률(추정)',
+        kor_name='영업이익률 성장률(추정)',
         unit='%',
         data_type=float,
         round=2,

@@ -105,9 +105,8 @@ class Baseline(DataFrameHeir):
         if not self.sector.date == self.sector.server_date == self.log.sector.date:
             tickets.append('sector')
 
-        if not self.number.server_date in ['failed', '']:
-            if not self.number.date == self.number.server_date == self.log.number.date:
-                tickets.append('number')
+        if not self.number.date == self.number.server_date == self.log.number.date:
+            tickets.append('number')
 
         if HOST == 'github_action':
             if 8 <= self.td.clock().hour < 20:
@@ -210,11 +209,13 @@ class Baseline(DataFrameHeir):
 
             if v.unit:
                 if k == 'marketCap':
-                    level1 = f'{level1}(억원)'
+                    level1 = f'{level1}\n(억원)'
                 else:
-                    level1 = f'{level1}({v.unit})'
+                    level1 = f'{level1}\n({v.unit})'
+            else:
+                level1 = f'{level1}\n'
             if level1 == "추정 기준일":
-                level1 = "기준일"
+                level1 = "기준일\n"
             columns.append((level0, level1))
 
         # 엑셀 파일에 쓰기
@@ -229,33 +230,38 @@ class Baseline(DataFrameHeir):
             head = lw.DataDict(
                 basic=wb.add_format({
                     'font_size': 8, 'bold': True,
-                    'align': 'center', 'valign':'vcenter',
+                    'align': 'center', 'valign':'vcenter', 'text_wrap': True,
                     'bg_color': '#D9D9D9'
                 }),
                 trailing=wb.add_format({
                     'font_size': 8, 'bold': True,
-                    'align': 'center', 'valign':'vcenter',
-                    'bg_color': '#83CCEB'
+                    'align': 'center', 'valign':'vcenter', 'text_wrap': True,
+                    'bg_color': '#83CCEB',
+                    'top': 1, 'top_color': 'black'
                 }),
                 yoy=wb.add_format({
                     'font_size': 8, 'bold': True,
-                    'align': 'center', 'valign': 'vcenter',
-                    'bg_color': '#94DCF8'
+                    'align': 'center', 'valign': 'vcenter', 'text_wrap': True,
+                    'bg_color': '#94DCF8',
+                    'top': 1, 'top_color': 'black'
                 }),
                 fiscal=wb.add_format({
                     'font_size': 8, 'bold': True,
-                    'align': 'center', 'valign': 'vcenter',
-                    'bg_color': '#F7C7AC'
+                    'align': 'center', 'valign': 'vcenter', 'text_wrap': True,
+                    'bg_color': '#F7C7AC',
+                    'top': 1, 'top_color': 'black'
                 }),
                 estimate=wb.add_format({
                     'font_size': 8, 'bold': True,
-                    'align': 'center', 'valign': 'vcenter',
-                    'bg_color': '#B5E6A2'
+                    'align': 'center', 'valign': 'vcenter', 'text_wrap': True,
+                    'bg_color': '#B5E6A2',
+                    'top': 1, 'top_color': 'black'
                 }),
                 etc=wb.add_format({
                     'font_size': 8, 'bold': True,
-                    'align': 'center', 'valign': 'vcenter',
-                    'bg_color': '#D9D9D9'
+                    'align': 'center', 'valign': 'vcenter', 'text_wrap': True,
+                    'bg_color': '#D9D9D9',
+                    'top': 1, 'top_color': 'black'
                 }),
 
             ),
@@ -268,6 +274,10 @@ class Baseline(DataFrameHeir):
                     'font_size': 8, 'bold': False,
                     'align': 'center', 'valign': 'vcenter',
                     'num_format': '#,##0'
+                }),
+                string=wb.add_format({
+                    'font_size': 8, 'bold': False,
+                    'align': 'left', 'valign': 'vcenter',
                 }),
             )
         )
@@ -288,7 +298,7 @@ class Baseline(DataFrameHeir):
                     ws.write(0, 0, '', _style)
             ws.write(1, n_col, l1, _style)
             if n_col == 1:
-                ws.write(1, 0, '종목코드', _style)
+                ws.write(1, 0, '종목코드\n', _style)
 
         # 인덱스(종목 코드) 삽입
         for n_row, ticker in enumerate(copy.index, start=2):
@@ -300,6 +310,9 @@ class Baseline(DataFrameHeir):
                 _style = style.cell.basic
                 if ('int' in str(type(col)).lower()) and (not columns[n_col - 1][1].endswith('일')):
                     _style = style.cell.integer
+                if columns[n_col - 1][1].startswith('KRX업종분류') or \
+                   columns[n_col - 1][1].startswith('주요제품'):
+                    _style = style.cell.string
                 if type(col) == str:
                     try:
                         col = float(col)
@@ -312,13 +325,36 @@ class Baseline(DataFrameHeir):
 
         # 열 너비 설정
         for n_col, col in enumerate(copy.columns, start=1):
-            if col.startswith('KRX'):
+            name = columns[n_col-1][1]
+            name = name[:name.find('\n')]
+            if name in ['KRX업종분류', '주요제품']:
                 continue
-            width = copy[col].apply(lambda x: len(str(x))).max()
-            ws.set_column(n_col, n_col, width + 2)
+            if name == '업종분류':
+                width = 11
+            elif name == '섹터분류':
+                width = 14
+            elif "수익률" in name:
+                width = 10
+            elif name in ["상장 주식수", "유동 주식수"]:
+                width = 12.5
+            elif name == "우선주":
+                width = 9
+            elif name == "매출":
+                width = 12
+            elif name in ["영업이익성장률", "영업이익률 성장률", "당기순이익성장률", "배당성향증감률"]:
+                width = 13.5
+            elif name == "KRX업종분류":
+                width = 12.5
+            else:
+                width = max(len(name), copy[col].apply(lambda x: len(str(x))).max()) + 2
+            ws.set_column(n_col, n_col, width)
 
         # 틀 고정
         ws.freeze_panes(2, 2)
+
+        # 필터 추가
+        ws.autofilter(1, 0, 1, len(copy.columns) + 1)
+
         wb.close()
         return
 
