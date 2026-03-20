@@ -3,7 +3,7 @@ from sib_api_v3_sdk.rest import ApiException
 from typing import Callable, Dict, Union
 import base64, os, sib_api_v3_sdk
 
-'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'
+
 class Mailing:
 
     ID = "LAB￦ONS"
