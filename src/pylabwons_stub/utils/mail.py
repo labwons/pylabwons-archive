@@ -31,14 +31,6 @@ class Mailing:
         return str(self._config)
 
     @property
-    def api(self) -> str:
-        return '*'
-
-    @api.setter
-    def api(self, api: str):
-        self._client.api_key['api-key'] = api
-
-    @property
     def content(self) -> str:
         return f"{self._config.html_content}\n\n<p style='color:gray;'>* 본 메일은 발신 전용으로 회신이 불가능합니다.</p>"
 
@@ -93,9 +85,12 @@ class Mailing:
     def send(self):
         conf = self._config.copy()
         conf['to'] = []
+        print(type(conf))
         for name, email in self.to.items():
             conf['to'] = [{"email": email}]
-            smtp = sib_api_v3_sdk.SendSmtpEmail(conf)
+            # for key, val in conf.items():
+            #     print(key, val)
+            smtp = sib_api_v3_sdk.SendSmtpEmail(**conf)
 
             try:
                 self._sender.send_transac_email(smtp)
@@ -106,9 +101,10 @@ class Mailing:
 
 if __name__ == '__main__':
 
-    mail = Mailing()
+    mail = Mailing(api='')
     mail.to.manager = "snob.labwons@gmail.com"
     mail.subject = f'[{mail.ID}] TESTING'
+    mail.content = "Hello World!"
 
-    print(mail)
-    print(mail.content)
+    # print(mail)
+    mail.send()
