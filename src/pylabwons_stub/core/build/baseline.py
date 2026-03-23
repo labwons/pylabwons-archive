@@ -1,7 +1,7 @@
 import xlsxwriter
 
 from pylabwons_stub.schema.dataframe import DataFrameHeir
-from pylabwons_stub.schema.const.baseline import BASELINE
+from pylabwons_stub.schema.const.baseline import BASELINE, COMMENT, STYLE
 from pylabwons_stub.core.fetch.market import Market
 from pylabwons_stub.core.fetch.number import Number
 from pylabwons_stub.core.fetch.sector import Sector
@@ -58,6 +58,14 @@ class Baseline(DataFrameHeir):
         self['trailingPe'] = round(self['close'] / self['trailingEps'], 2)
         self['trailingPs'] = round((self['marketCap'] / 1e+8) / self['trailingRevenue'], 2)
         self['yoyRevenue'] = self['yoyRevenue'].fillna('미제공')
+
+        trailingPe = pd.to_numeric(self.trailingPe, errors='coerce')
+        trailingEps = pd.to_numeric(self.trailingEps, errors='coerce')
+        yoyEps = pd.to_numeric(self.yoyEps, errors='coerce')
+        forwardPe = pd.to_numeric(self.forwardPe, errors='coerce')
+        forwardEps = pd.to_numeric(self.forwardEps, errors='coerce')
+        self['trailingPeg'] = round(trailingPe / yoyEps, 2)
+        self['forwardPeg'] = round(forwardPe / 100 * (forwardEps / trailingEps - 1), 2)
         self.sort_values(by='marketCap', ascending=False, inplace=True)
 
         super().__init__(self[BASELINE.keys()])
@@ -173,49 +181,28 @@ class Baseline(DataFrameHeir):
         return
 
     def release(self, path:Union[str, Path]):
-        # 데이터 전처리
-        drop = ['market', 'shares', 'foreignSharesLimit', 'foreignRateByLimit' ,
-                'estimation', 'nOfEstimations',
-                'groupByMarketCap', 'wicsDate', 'industryCode', 'sectorCode']
-
         copy = self.copy()
         copy['name'] = copy[['name', 'market']].apply(lambda r: f'{r[0]}*' if r[1] == 'kosdaq' else r[0], axis=1, raw=True)
         copy.marketCap = (copy.marketCap / 1e+8).astype(int)
         copy.ifrsType = copy.ifrsType.apply(lambda x: "연결" if x == "D" else "별도")
-        copy.drop(columns=drop, inplace=True)
+        copy.fiscalMonth = copy.fiscalMonth.apply(lambda x: str(x).replace("(P)", ", 잠정"))
+        copy.estimatedMonth = copy.estimatedMonth.apply(lambda x: str(x).replace("(E)", ", 추정"))
+
+        copy = copy[[c for c, v in BASELINE.items() if v.rel_name]]
 
         # 열(지표) 이름 처리
         columns = []
         for k, v in BASELINE.items():
-            if k in drop:
+            if not v.rel_name:
                 continue
 
-            level0 = ''
-            level1 = v.kor_name
-            if '(' in v.kor_name and ')' in v.kor_name:
-                level0 = v.kor_name.split('(')[-1][:-1]
-                level1 = level1.replace(f"({level0})", "")
+            level0, level1 = v.rel_group, v.rel_name
 
-            if level0 == "직전결산연도":
-                level0 = "직전 결산 기준"
-            if "목표" in level1 or "추정" in level1 or level0 == "12개월선행":
-                if level0 == "12개월선행":
-                    level1 = f"{level1}(12개월선행)"
-                level0 = "추정"
-            if level1 in ['KRX업종분류', 'KRX업종PER', '주요제품', '상장일', '베타']:
-                level0 = '기타'
-            if level0 == "추정":
-                level0 = "추정치"
+            unit = v.unit
+            if k == 'marketCap':
+                unit = '억원'
+            level1 = f'{level1}\n({unit})' if unit else f'{level1}\n'
 
-            if v.unit:
-                if k == 'marketCap':
-                    level1 = f'{level1}\n(억원)'
-                else:
-                    level1 = f'{level1}\n({v.unit})'
-            else:
-                level1 = f'{level1}\n'
-            if level1 == "추정 기준일":
-                level1 = "기준일\n"
             columns.append((level0, level1))
 
         # 엑셀 파일에 쓰기
@@ -226,64 +213,9 @@ class Baseline(DataFrameHeir):
         ws = wb.add_worksheet(name)
 
         # 서식
-        style = lw.DataDict(
-            head = lw.DataDict(
-                basic=wb.add_format({
-                    'font_size': 8, 'bold': True,
-                    'align': 'center', 'valign':'vcenter', 'text_wrap': True,
-                    'bg_color': '#D9D9D9'
-                }),
-                trailing=wb.add_format({
-                    'font_size': 8, 'bold': True,
-                    'align': 'center', 'valign':'vcenter', 'text_wrap': True,
-                    'bg_color': '#83CCEB',
-                    'top': 1, 'top_color': 'black'
-                }),
-                yoy=wb.add_format({
-                    'font_size': 8, 'bold': True,
-                    'align': 'center', 'valign': 'vcenter', 'text_wrap': True,
-                    'bg_color': '#94DCF8',
-                    'top': 1, 'top_color': 'black'
-                }),
-                fiscal=wb.add_format({
-                    'font_size': 8, 'bold': True,
-                    'align': 'center', 'valign': 'vcenter', 'text_wrap': True,
-                    'bg_color': '#F7C7AC',
-                    'top': 1, 'top_color': 'black'
-                }),
-                estimate=wb.add_format({
-                    'font_size': 8, 'bold': True,
-                    'align': 'center', 'valign': 'vcenter', 'text_wrap': True,
-                    'bg_color': '#B5E6A2',
-                    'top': 1, 'top_color': 'black'
-                }),
-                etc=wb.add_format({
-                    'font_size': 8, 'bold': True,
-                    'align': 'center', 'valign': 'vcenter', 'text_wrap': True,
-                    'bg_color': '#D9D9D9',
-                    'top': 1, 'top_color': 'black'
-                }),
-
-            ),
-            cell=lw.DataDict(
-                basic=wb.add_format({
-                    'font_size': 8, 'bold': False,
-                    'align': 'center', 'valign': 'vcenter'
-                }),
-                integer=wb.add_format({
-                    'font_size': 8, 'bold': False,
-                    'align': 'center', 'valign': 'vcenter',
-                    'num_format': '#,##0'
-                }),
-                string=wb.add_format({
-                    'font_size': 8, 'bold': False,
-                    'align': 'left', 'valign': 'vcenter',
-                }),
-            )
-        )
-
+        style = STYLE(wb)
         switch = {'':'basic', '4분기 합산': 'trailing', '전년 동기 대비': 'yoy',
-                  '직전 결산 기준': 'fiscal', '추정치': 'estimate', '기타':'etc'}
+                  '직전 결산 기준': 'fiscal', '컨센서스': 'estimate', '기타':'etc'}
 
         # 헤더(열 이름) 삽입
         l0_base = columns[0][0]
@@ -308,11 +240,12 @@ class Baseline(DataFrameHeir):
         for n_row, row in enumerate(copy.itertuples(index=False), start=2):
             for n_col, col in enumerate(row, start=1):
                 _style = style.cell.basic
-                if ('int' in str(type(col)).lower()) and (not columns[n_col - 1][1].endswith('일')):
+                if ('int' in str(type(col)).lower()) and (not columns[n_col - 1][1].endswith('일\n')):
                     _style = style.cell.integer
                 if columns[n_col - 1][1].startswith('KRX업종분류') or \
                    columns[n_col - 1][1].startswith('주요제품'):
                     _style = style.cell.string
+
                 if type(col) == str:
                     try:
                         col = float(col)
@@ -325,34 +258,35 @@ class Baseline(DataFrameHeir):
 
         # 열 너비 설정
         for n_col, col in enumerate(copy.columns, start=1):
-            name = columns[n_col-1][1]
-            name = name[:name.find('\n')]
-            if name in ['KRX업종분류', '주요제품']:
+            meta = BASELINE[col]
+            if not meta.rel_name:
                 continue
-            if name == "우선주":
-                width = 9
-            elif "수익률" in name:
-                width = 10
-            elif name == '업종분류':
-                width = 11
-            elif name == "매출":
-                width = 12
-            elif name in ["상장 주식수", "유동 주식수", "KRX업종분류"]:
-                width = 12.5
-            elif name in ["영업이익성장률", "영업이익률 성장률", "당기순이익성장률", "배당성향증감률"]:
-                width = 13.5
-            elif name == '섹터분류':
-                width = 14
-            else:
-                width = max(len(name), copy[col].apply(lambda x: len(str(x))).max()) + 2
-            ws.set_column(n_col, n_col, width)
+            ws.set_column(n_col, n_col, meta.rel_width)
 
         # 틀 고정
         ws.freeze_panes(2, 2)
 
         # 필터 추가
-        ws.autofilter(1, 0, 1, len(copy.columns) + 1)
+        ws.autofilter(1, 0, 1, len(copy.columns))
 
+        # 2번째 시트 추가(지표 안내)
+        ws_2 = wb.add_worksheet("지표 안내")
+        ws_2.write(0, 0, COMMENT.WARN, style.head.warn)
+        ws_2.write_row(1, 0,  ["분류", "지표 이름", "단위", "정보 출처", "계산식"], style.head.basic)
+        n_row = 2
+        for c, ind in BASELINE.items():
+            if not ind.rel_name:
+                continue
+
+            group = '공통' if not ind.rel_group else ind.rel_group
+            unit = '억원' if c == 'marketCap' else ind.unit
+            ws_2.write_row(n_row, 0, [group, ind.rel_name, unit, ind.ref], style.cell.basic)
+            ws_2.write(n_row, 4, ind.calc, style.cell.string)
+            n_row += 1
+
+        ws_2.set_column(0, 0, 15)
+        ws_2.set_column(1, 1, 18)
+        ws_2.set_column(3, 3, 18)
         wb.close()
         return
 
@@ -362,8 +296,8 @@ if __name__ == "__main__":
     # print(baseline.market.date)
     # print(baseline)
     # print(baseline.columns)
-    # baseline.build()
-    # baseline.release(PATH.DOWNLOADS / f'BASELINE.xlsx')
+    # baseline.build('baseline')
+    baseline.release(PATH.DOWNLOADS / f'BASELINE.xlsx')
     # baseline.market.to_excel(PATH.DOWNLOADS / 'market.xlsx')
     # baseline.number.to_excel(PATH.DOWNLOADS / 'number.xlsx')
     # baseline.sector.to_excel(PATH.DOWNLOADS / 'sector.xlsx')
