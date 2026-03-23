@@ -17,10 +17,11 @@ if __name__ == "__main__":
     market_map = lws.MarketMap(logger=logger)
     market_map.deploy()
 
-    if baseline.log.baseline.date.endswith("15:30") and baseline.td.clock().hour <= 18:
+    if baseline.log.baseline.date.endswith("15:30") and \
+       (15 <= baseline.td.clock().hour <= 20):
         if not 'BREVO' in os.environ:
             raise SystemExit
-        filepath = lws.PATH.DATA / 'src/BASELINE.xlsx'
+        filepath = lws.PATH.DATA / 'src/release/BASELINE.xlsx'
         baseline.release(filepath)
 
         mail = lws.Mailing(api=os.environ['BREVO'], logger=logger)

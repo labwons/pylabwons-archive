@@ -329,22 +329,20 @@ class Baseline(DataFrameHeir):
             name = name[:name.find('\n')]
             if name in ['KRX업종분류', '주요제품']:
                 continue
-            if name == '업종분류':
-                width = 11
-            elif name == '섹터분류':
-                width = 14
+            if name == "우선주":
+                width = 9
             elif "수익률" in name:
                 width = 10
-            elif name in ["상장 주식수", "유동 주식수"]:
-                width = 12.5
-            elif name == "우선주":
-                width = 9
+            elif name == '업종분류':
+                width = 11
             elif name == "매출":
                 width = 12
+            elif name in ["상장 주식수", "유동 주식수", "KRX업종분류"]:
+                width = 12.5
             elif name in ["영업이익성장률", "영업이익률 성장률", "당기순이익성장률", "배당성향증감률"]:
                 width = 13.5
-            elif name == "KRX업종분류":
-                width = 12.5
+            elif name == '섹터분류':
+                width = 14
             else:
                 width = max(len(name), copy[col].apply(lambda x: len(str(x))).max()) + 2
             ws.set_column(n_col, n_col, width)
