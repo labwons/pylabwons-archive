@@ -21,17 +21,13 @@ if __name__ == "__main__":
        (15 <= baseline.td.clock().hour <= 20):
         if not 'BREVO' in os.environ:
             raise SystemExit
-        filepath = lws.PATH.DATA / 'src/release/BASELINE.xlsx'
-        baseline.release(filepath)
+
+        release = lws.Release(logger=logger)
+        release.as_excel()
 
         mail = lws.Mailing(api=os.environ['BREVO'], logger=logger)
-        mail.subject = f'[{mail.ID}] {baseline.log.baseline.date} 시장 정보'
-        mail.content = f"""
-        <h2>기준 일자</h2>
-        <p>- 기본 정보 수집일: {baseline.log.market.date}</p>
-        <p>- 재무 정보 수집일: {baseline.log.number.date}</p>
-        <p>- 업종 정보 수집일: {baseline.log.sector.date}</p>
-        """
-        mail.attach(filepath)
+        mail.subject = f'[{release.ID}] 시장 데이터베이스({release.date})'
+        mail.content = release.note
+        mail.attach(release.path)
         mail.send()
 

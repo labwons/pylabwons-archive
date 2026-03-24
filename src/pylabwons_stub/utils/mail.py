@@ -6,7 +6,6 @@ import base64, os, sib_api_v3_sdk
 
 class Mailing:
 
-    ID = "LAB￦ONS"
     def __init__(self, api:str = '', logger:Callable=print):
 
         self._client = sib_api_v3_sdk.Configuration()
@@ -32,11 +31,11 @@ class Mailing:
 
     @property
     def content(self) -> str:
-        return f"{self._config.html_content}\n\n<p style='color:gray;'>* 본 메일은 발신 전용으로 회신이 불가능합니다.</p>"
+        return f"{self._config.html_content}<br><br><p style='color:gray;'>* 본 메일은 발신 전용으로 회신이 불가능합니다.</p>"
 
     @content.setter
     def content(self, content: str):
-        self._config.html_content = f"{content}\n\n<p style='color:gray;'>* 본 메일은 발신 전용으로 회신이 불가능합니다.</p>"
+        self._config.html_content = f"{content}<br><br><p style='color:gray;'>* 본 메일은 발신 전용으로 회신이 불가능합니다.</p>"
 
     @property
     def subject(self):
