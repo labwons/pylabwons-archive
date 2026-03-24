@@ -14,7 +14,7 @@ class Mailing:
 
         self._config = DataDict(
             sender=DataDict(
-                name=self.ID,
+                name="no_reply",
                 email="no_reply@labwons.com"
             ),
             to=DataDict(
@@ -36,6 +36,10 @@ class Mailing:
     @content.setter
     def content(self, content: str):
         self._config.html_content = f"{content}<br><br><p style='color:gray;'>* 본 메일은 발신 전용으로 회신이 불가능합니다.</p>"
+
+    @property
+    def sender(self) -> DataDict:
+        return self._config.sender
 
     @property
     def subject(self):
@@ -99,8 +103,9 @@ if __name__ == '__main__':
 
     mail = Mailing(api='')
     mail.to.manager = "snob.labwons@gmail.com"
-    mail.subject = f'[{mail.ID}] TESTING'
+    mail.sender.name = 'TESTER'
+    mail.subject = f'[TEST] TESTING'
     mail.content = "Hello World!"
 
-    # print(mail)
-    mail.send()
+    print(mail)
+    # mail.send()

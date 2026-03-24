@@ -26,7 +26,8 @@ if __name__ == "__main__":
         release.as_excel()
 
         mail = lws.Mailing(api=os.environ['BREVO'], logger=logger)
-        mail.subject = f'[{release.ID}] 시장 데이터베이스({release.date})'
+        mail.sender.name = release.ID
+        mail.subject = f'[{release.ID}] 시장 데이터베이스({release.log.baseline.date})'
         mail.content = release.note
         mail.attach(release.path)
         mail.send()
