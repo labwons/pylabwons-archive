@@ -46,8 +46,8 @@ class Release(Baseline):
 <p>* 중위 시가총액(≒ {int(self['marketCap'].median()):,d}억원) 미만 종목은 재무 정보를 수집하지 않습니다.</p>
 <br>
 <h2>{self.ID} 서비스 바로가기</h2>
-<a href="https://labwons.com">시장 지도</a>
-<a href="https://labwons.com/bubbles">버블 차트</a>
+<h3><a href="https://labwons.com">시장 지도</a></h3>
+<h3><a href="https://labwons.com/bubbles">버블 차트</a></h3>
 """
 
     @property
